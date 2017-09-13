@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Window;
 
+import com.gyf.barlibrary.ImmersionBar;
 import com.mask.app.MyApplication;
 
 import butterknife.ButterKnife;
@@ -15,7 +16,7 @@ public abstract class BaseActivity extends FragmentActivity {
         MyApplication.newInstance().addActyToList(this);
     }
 
-
+    private ImmersionBar mImmersionBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,8 @@ public abstract class BaseActivity extends FragmentActivity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(getContentView());
         ButterKnife.bind(this);
+        mImmersionBar = ImmersionBar.with(this);
+        mImmersionBar.init();
         init();
     }
 
@@ -30,6 +33,8 @@ public abstract class BaseActivity extends FragmentActivity {
     protected void onDestroy() {
         super.onDestroy();
         MyApplication.newInstance().removeActyFromList(this);
+        if (mImmersionBar != null)
+            mImmersionBar.destroy();
     }
 
     //注入布局

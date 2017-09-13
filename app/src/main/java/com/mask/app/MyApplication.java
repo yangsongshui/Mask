@@ -36,7 +36,6 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
-
         SpUtils.init(this);
 
 
