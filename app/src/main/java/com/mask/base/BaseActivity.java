@@ -1,22 +1,26 @@
 package com.mask.base;
 
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.view.Window;
 
-import com.gyf.barlibrary.ImmersionBar;
 import com.mask.app.MyApplication;
 
 import butterknife.ButterKnife;
 
 
-public abstract class BaseActivity extends FragmentActivity {
+
+
+public abstract class BaseActivity extends AppCompatActivity {
     //添加到活动管理集合中
     {
         MyApplication.newInstance().addActyToList(this);
     }
 
-    private ImmersionBar mImmersionBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,8 +28,17 @@ public abstract class BaseActivity extends FragmentActivity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(getContentView());
         ButterKnife.bind(this);
-        mImmersionBar = ImmersionBar.with(this);
-        mImmersionBar.init();
+        if (Build.VERSION.SDK_INT >= 21) {
+            View decorView = getWindow().getDecorView();
+            int option = View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+            decorView.setSystemUiVisibility(option);
+            getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            getWindow().setStatusBarColor(Color.TRANSPARENT);
+        }
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.hide();
         init();
     }
 
@@ -33,8 +46,7 @@ public abstract class BaseActivity extends FragmentActivity {
     protected void onDestroy() {
         super.onDestroy();
         MyApplication.newInstance().removeActyFromList(this);
-        if (mImmersionBar != null)
-            mImmersionBar.destroy();
+
     }
 
     //注入布局
