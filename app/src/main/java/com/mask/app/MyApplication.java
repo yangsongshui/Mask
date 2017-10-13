@@ -1,11 +1,10 @@
 package com.mask.app;
 
 import android.app.Activity;
-import android.app.Application;
 
 import com.mask.utils.SpUtils;
 
-
+import org.litepal.LitePalApplication;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.List;
  * Created by omni20170501 on 2017/6/8.
  */
 
-public class MyApplication extends Application {
+public class MyApplication extends LitePalApplication {
     private static final String TAG = "MyApplication";
     public String bindMac;
     private static MyApplication instance;
