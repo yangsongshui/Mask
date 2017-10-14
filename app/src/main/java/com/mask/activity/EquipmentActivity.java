@@ -11,6 +11,7 @@ import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.mask.R;
 import com.mask.adapter.EquipmentAdapter;
+import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
 import com.mask.bean.MyDevice;
 
@@ -27,6 +28,7 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
     SwipeMenuListView listView;
     EquipmentAdapter adapter;
     List<MyDevice> mList;
+
     @Override
     protected int getContentView() {
         return R.layout.activity_equipment;
@@ -46,7 +48,6 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
         listView.setOnMenuItemClickListener(this);
         listView.setOnItemClickListener(this);
     }
-
 
 
     @OnClick({R.id.equipment_left_tv, R.id.iv_equipment_right})
@@ -83,15 +84,20 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
             menu.addMenuItem(deleteItem);
         }
     };
+
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+        MyApplication.newInstance().setMyDevice(mList.get(position));
+        finish();
     }
 
     @Override
     public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+        mList.remove(position);
+        adapter.notifyDataSetChanged();
         return false;
     }
+
     protected int dp2px(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
                 getResources().getDisplayMetrics());

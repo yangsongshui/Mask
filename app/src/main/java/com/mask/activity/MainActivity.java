@@ -117,6 +117,7 @@ public class MainActivity extends BaseActivity {
                 break;
             case R.id.main_add_tv:
                 //添加组
+                startActivity(new Intent(this,GroupActivity.class));
                 break;
         }
     }

@@ -1,5 +1,6 @@
 package com.mask.activity;
 
+import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.util.TypedValue;
 import android.view.View;
@@ -10,20 +11,21 @@ import com.baoyz.swipemenulistview.SwipeMenuCreator;
 import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.mask.R;
-import com.mask.adapter.EquipmentAdapter;
+import com.mask.adapter.GroupAdapter;
 import com.mask.base.BaseActivity;
-import com.mask.bean.MyDevice;
+import com.mask.bean.MyGroup;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
+import butterknife.OnClick;
 
 public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnMenuItemClickListener, AdapterView.OnItemClickListener {
     @BindView(R.id.listView)
     SwipeMenuListView listView;
-    EquipmentAdapter adapter;
-    List<MyDevice> mList;
+    GroupAdapter adapter;
+    List<MyGroup> mList;
 
     @Override
     protected int getContentView() {
@@ -33,17 +35,18 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
     @Override
     protected void init() {
         mList = new ArrayList<>();
-        mList.add(new MyDevice("123"));
-        mList.add(new MyDevice("zsda"));
-        mList.add(new MyDevice("asd"));
-        mList.add(new MyDevice("fdsf"));
-        mList.add(new MyDevice("dfg"));
-        adapter = new EquipmentAdapter(mList, this);
+        mList.add(new MyGroup("123"));
+        mList.add(new MyGroup("zsda"));
+        mList.add(new MyGroup("asd"));
+        mList.add(new MyGroup("fdsf"));
+        mList.add(new MyGroup("dfg"));
+        adapter = new GroupAdapter(mList, this);
         listView.setAdapter(adapter);
         listView.setMenuCreator(creator);
         listView.setOnMenuItemClickListener(this);
         listView.setOnItemClickListener(this);
     }
+
     /*添加侧滑菜单*/
     SwipeMenuCreator creator = new SwipeMenuCreator() {
         @Override
@@ -66,6 +69,7 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
             menu.addMenuItem(deleteItem);
         }
     };
+
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
@@ -73,10 +77,26 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
 
     @Override
     public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+        mList.remove(position);
+        adapter.notifyDataSetChanged();
         return false;
     }
+
     protected int dp2px(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
                 getResources().getDisplayMetrics());
+    }
+
+
+    @OnClick({R.id.equipment_left_tv, R.id.iv_equipment_right})
+    public void onViewClicked(View view) {
+        switch (view.getId()) {
+            case R.id.equipment_left_tv:
+                finish();
+                break;
+            case R.id.iv_equipment_right:
+                startActivity(new Intent(this, AddActivity.class));
+                break;
+        }
     }
 }

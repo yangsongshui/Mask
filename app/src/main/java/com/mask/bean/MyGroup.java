@@ -1,10 +1,12 @@
 package com.mask.bean;
 
+import org.litepal.crud.DataSupport;
+
 /**
  * Created by ys on 2017/10/13.
  */
 
-public class MyGroup {
+public class MyGroup  extends DataSupport {
     String id;
     String name;
 

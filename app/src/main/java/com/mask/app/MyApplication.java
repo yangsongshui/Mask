@@ -2,13 +2,14 @@ package com.mask.app;
 
 import android.app.Activity;
 
+import com.mask.bean.MyDevice;
 import com.mask.utils.SpUtils;
 
+import org.litepal.LitePal;
 import org.litepal.LitePalApplication;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 
 /**
@@ -20,7 +21,7 @@ public class MyApplication extends LitePalApplication {
     public String bindMac;
     private static MyApplication instance;
     public static List<Activity> activitiesList = new ArrayList<Activity>(); // 活动管理集合
-
+    private MyDevice myDevice;
 
     /**
      * 获取单例
@@ -35,6 +36,7 @@ public class MyApplication extends LitePalApplication {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        LitePal.initialize(this);
         SpUtils.init(this);
 
 
@@ -70,5 +72,11 @@ public class MyApplication extends LitePalApplication {
         }
 
     }
+    public MyDevice getMyDevice() {
+        return myDevice;
+    }
 
+    public void setMyDevice(MyDevice myDevice) {
+        this.myDevice = myDevice;
+    }
 }
