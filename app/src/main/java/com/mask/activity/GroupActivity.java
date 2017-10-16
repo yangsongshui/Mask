@@ -72,7 +72,7 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+         startActivity(new Intent(this,SetGroupActivity.class));
     }
 
     @Override

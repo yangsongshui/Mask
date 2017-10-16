@@ -110,6 +110,7 @@ public class MainActivity extends BaseActivity {
                 break;
             case R.id.me_pic_iv:
                 //头像
+                startActivity(new Intent(this,PortraitActivity.class));
                 break;
             case R.id.main_equipment_tv:
                 //设备列表

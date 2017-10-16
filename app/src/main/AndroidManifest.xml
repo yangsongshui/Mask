@@ -21,7 +21,8 @@
         <activity android:name=".activity.EquipmentActivity" />
         <activity android:name=".activity.GroupActivity" />
         <activity android:name=".activity.AddActivity" />
-        <activity android:name=".activity.SetGroupActivity"></activity>
+        <activity android:name=".activity.SetGroupActivity" />
+        <activity android:name=".activity.PortraitActivity"></activity>
     </application>
 
 </manifest>
