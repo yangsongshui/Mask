@@ -16,12 +16,16 @@ import com.google.zxing.WriterException;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.mask.R;
 import com.mask.base.BaseActivity;
+import com.mask.utils.SpUtils;
 import com.mask.zxing.encoding.EncodingHandler;
 
 import butterknife.BindView;
 import butterknife.OnClick;
 import de.hdodenhof.circleimageview.CircleImageView;
 import me.codeboy.android.aligntextview.AlignTextView;
+
+import static com.mask.utils.Constant.HEAD_PORTRAIT;
+import static com.mask.utils.Constant.id;
 
 public class MainActivity extends BaseActivity {
 
@@ -127,6 +131,12 @@ public class MainActivity extends BaseActivity {
     protected void onStop() {
         super.onStop();
         activityMain.closeDrawer(Gravity.LEFT);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mePicIv.setImageResource(id[SpUtils.getInt(HEAD_PORTRAIT, 0)]);
     }
     //截取屏幕分享
  /*   private void UMShare(SHARE_MEDIA platform) {

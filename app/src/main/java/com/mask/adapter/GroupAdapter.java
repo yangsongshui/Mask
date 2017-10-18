@@ -48,4 +48,8 @@ public class GroupAdapter extends MyBaseAdapter<MyGroup> {
             view.setTag(this);
         }
     }
+    public void setmList(List<MyGroup> list){
+        mList = list;
+        notifyDataSetChanged();
+    }
 }

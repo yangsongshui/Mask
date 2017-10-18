@@ -5,6 +5,7 @@ import android.widget.EditText;
 
 import com.mask.R;
 import com.mask.base.BaseActivity;
+import com.mask.bean.MyGroup;
 
 import butterknife.BindView;
 import butterknife.OnClick;
@@ -23,8 +24,8 @@ public class AddActivity extends BaseActivity {
     @Override
     protected void init() {
 
-    }
 
+    }
 
 
     @OnClick({R.id.add_left_tv, R.id.et_re, R.id.add_tv})
@@ -37,6 +38,12 @@ public class AddActivity extends BaseActivity {
                 et.setText("");
                 break;
             case R.id.add_tv:
+                if (!et.getText().toString().equals("")) {
+                    MyGroup group = new MyGroup();
+                    group.setName(et.getText().toString());
+                    if (group.save())
+                        finish();
+                }
                 break;
         }
     }

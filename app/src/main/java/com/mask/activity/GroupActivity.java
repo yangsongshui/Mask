@@ -5,7 +5,8 @@ import android.graphics.drawable.ColorDrawable;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.AdapterView;
-
+import butterknife.BindView;
+import butterknife.OnClick;
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
 import com.baoyz.swipemenulistview.SwipeMenuItem;
@@ -14,12 +15,10 @@ import com.mask.R;
 import com.mask.adapter.GroupAdapter;
 import com.mask.base.BaseActivity;
 import com.mask.bean.MyGroup;
+import org.litepal.crud.DataSupport;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import butterknife.BindView;
-import butterknife.OnClick;
 
 public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnMenuItemClickListener, AdapterView.OnItemClickListener {
     @BindView(R.id.listView)
@@ -34,12 +33,8 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
 
     @Override
     protected void init() {
-        mList = new ArrayList<>();
-        mList.add(new MyGroup("123"));
-        mList.add(new MyGroup("zsda"));
-        mList.add(new MyGroup("asd"));
-        mList.add(new MyGroup("fdsf"));
-        mList.add(new MyGroup("dfg"));
+        mList=new ArrayList<>();
+        mList.addAll(DataSupport.findAll(MyGroup.class));
         adapter = new GroupAdapter(mList, this);
         listView.setAdapter(adapter);
         listView.setMenuCreator(creator);
@@ -77,6 +72,8 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
 
     @Override
     public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+
+        DataSupport.delete(MyGroup.class, mList.get(position).getId());
         mList.remove(position);
         adapter.notifyDataSetChanged();
         return false;
@@ -98,5 +95,13 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
                 startActivity(new Intent(this, AddActivity.class));
                 break;
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mList.clear();
+        mList.addAll( DataSupport.findAll(MyGroup.class));
+        adapter.setmList(mList);
     }
 }

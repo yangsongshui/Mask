@@ -39,7 +39,6 @@ public class MyApplication extends LitePalApplication {
         LitePal.initialize(this);
         SpUtils.init(this);
 
-
     }
 
     /**

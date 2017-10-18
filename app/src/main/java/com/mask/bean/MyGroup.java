@@ -7,7 +7,7 @@ import org.litepal.crud.DataSupport;
  */
 
 public class MyGroup  extends DataSupport {
-    String id;
+    int id;
     String name;
 
     public MyGroup(String name) {
@@ -17,11 +17,11 @@ public class MyGroup  extends DataSupport {
     public MyGroup() {
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
