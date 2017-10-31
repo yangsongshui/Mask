@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.mask">
+
     <!-- 允许程序设置内置sd卡的写权限 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <!-- 允许程序打开网络套接字 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 允许程序设置内置sd卡的写权限 -->
@@ -19,6 +20,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:name=".app.MyApplication"
         android:allowBackup="true"
@@ -39,7 +41,11 @@
         <activity android:name=".activity.GroupActivity" />
         <activity android:name=".activity.AddActivity" />
         <activity android:name=".activity.SetGroupActivity" />
-        <activity android:name=".activity.PortraitActivity"></activity>
+        <activity android:name=".activity.PortraitActivity" />
+        <activity android:name=".activity.GroupDeviceActivity"></activity>
+        <service
+            android:name=".service.MyService"
+            android:enabled="true" />
     </application>
 
 </manifest>

@@ -1,6 +1,11 @@
 package com.mask.activity;
 
+import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -15,9 +20,14 @@ import android.widget.Toast;
 import com.google.zxing.WriterException;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.mask.R;
+import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
 import com.mask.utils.SpUtils;
+import com.mask.utils.Toastor;
 import com.mask.zxing.encoding.EncodingHandler;
+import com.zhy.m.permission.MPermissions;
+import com.zhy.m.permission.PermissionDenied;
+import com.zhy.m.permission.PermissionGrant;
 
 import butterknife.BindView;
 import butterknife.OnClick;
@@ -69,10 +79,13 @@ public class MainActivity extends BaseActivity {
     @BindView(R.id.activity_main)
     DrawerLayout activityMain;
     @BindView(R.id.QrCode)
-    ImageView QrCode;
+    ImageView qrCode;
     @BindView(R.id.main_kongzhi)
     LinearLayout mainKongZhi;
-
+    private BluetoothAdapter mBluetoothAdapter;
+    Toastor toastor;
+    private final static int REQUECT_CODE_COARSE = 1;
+    private MyApplication mApplication;
     @Override
     protected int getContentView() {
         return R.layout.activity_main;
@@ -80,6 +93,10 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void init() {
+        toastor = new Toastor(this);
+        initBLE();
+        this.mApplication = (MyApplication) this.getApplication();
+        this.mApplication.doInit();
 
     }
 
@@ -94,7 +111,7 @@ public class MainActivity extends BaseActivity {
             case R.id.main_fenxiang:
                 //分享
                 mainKongZhi.setVisibility(View.GONE);
-                QrCode.setVisibility(View.VISIBLE);
+                qrCode.setVisibility(View.VISIBLE);
                 try {
                     //获取输入的文本信息
                     String str = "123456";
@@ -103,7 +120,7 @@ public class MainActivity extends BaseActivity {
                         Bitmap mBitmap = EncodingHandler.createQRCode(str, 500);
                         if (mBitmap != null) {
                             Toast.makeText(this, "二维码生成成功！", Toast.LENGTH_SHORT).show();
-                            QrCode.setImageBitmap(mBitmap);
+                            qrCode.setImageBitmap(mBitmap);
                         }
                     } else {
                         Toast.makeText(this, "文本信息不能为空！", Toast.LENGTH_SHORT).show();
@@ -114,15 +131,17 @@ public class MainActivity extends BaseActivity {
                 break;
             case R.id.me_pic_iv:
                 //头像
-                startActivity(new Intent(this,PortraitActivity.class));
+                startActivity(new Intent(this, PortraitActivity.class));
                 break;
             case R.id.main_equipment_tv:
                 //设备列表
-                startActivity(new Intent(this,EquipmentActivity.class));
+                startActivity(new Intent(this, EquipmentActivity.class));
                 break;
             case R.id.main_add_tv:
                 //添加组
-                startActivity(new Intent(this,GroupActivity.class));
+                startActivity(new Intent(this, GroupActivity.class));
+                break;
+            default:
                 break;
         }
     }
@@ -137,7 +156,10 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         mePicIv.setImageResource(id[SpUtils.getInt(HEAD_PORTRAIT, 0)]);
+        MPermissions.requestPermissions(MainActivity.this, REQUECT_CODE_COARSE,
+                Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
     }
+
     //截取屏幕分享
  /*   private void UMShare(SHARE_MEDIA platform) {
 
@@ -157,4 +179,33 @@ public class MainActivity extends BaseActivity {
                 .setCallback(umShareListener)
                 .share();
     }*/
+    private void initBLE() {
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            toastor.showSingletonToast("设备不支持蓝牙4.0");
+            finish();
+        }
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        if (mBluetoothAdapter == null) {
+            toastor.showSingletonToast("设备不支持蓝牙");
+            finish();
+            return;
+        }
+        mBluetoothAdapter.enable();
+    }
+
+    @PermissionGrant(REQUECT_CODE_COARSE)
+    public void requestSdcardSuccess() {
+
+
+    }
+
+    @PermissionDenied(REQUECT_CODE_COARSE)
+    public void requestSdcardFailed() {
+        toastor.showSingletonToast("程序主要权限获取失败,程序退出");
+        finish();
+    }
+
 }

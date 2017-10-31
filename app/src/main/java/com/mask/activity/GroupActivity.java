@@ -5,8 +5,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.AdapterView;
-import butterknife.BindView;
-import butterknife.OnClick;
+
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
 import com.baoyz.swipemenulistview.SwipeMenuItem;
@@ -15,10 +14,14 @@ import com.mask.R;
 import com.mask.adapter.GroupAdapter;
 import com.mask.base.BaseActivity;
 import com.mask.bean.MyGroup;
+
 import org.litepal.crud.DataSupport;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.OnClick;
 
 public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnMenuItemClickListener, AdapterView.OnItemClickListener {
     @BindView(R.id.listView)
@@ -33,7 +36,7 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
 
     @Override
     protected void init() {
-        mList=new ArrayList<>();
+        mList = new ArrayList<>();
         mList.addAll(DataSupport.findAll(MyGroup.class));
         adapter = new GroupAdapter(mList, this);
         listView.setAdapter(adapter);
@@ -67,7 +70,7 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-         startActivity(new Intent(this,SetGroupActivity.class));
+        startActivity(new Intent(this, GroupDeviceActivity.class));
     }
 
     @Override
@@ -94,6 +97,8 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
             case R.id.iv_equipment_right:
                 startActivity(new Intent(this, AddActivity.class));
                 break;
+            default:
+                break;
         }
     }
 
@@ -101,7 +106,7 @@ public class GroupActivity extends BaseActivity implements SwipeMenuListView.OnM
     protected void onResume() {
         super.onResume();
         mList.clear();
-        mList.addAll( DataSupport.findAll(MyGroup.class));
+        mList.addAll(DataSupport.findAll(MyGroup.class));
         adapter.setmList(mList);
     }
 }

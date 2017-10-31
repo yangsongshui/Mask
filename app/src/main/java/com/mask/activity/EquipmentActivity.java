@@ -14,6 +14,7 @@ import com.mask.adapter.EquipmentAdapter;
 import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
 import com.mask.bean.MyDevice;
+import com.mask.service.MyService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +58,11 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
                 finish();
                 break;
             case R.id.iv_equipment_right:
+                MyService.Instance().idleMode(true);
+                MyService.Instance().Connect();
                 break;
-
+            default:
+                break;
         }
     }
 
