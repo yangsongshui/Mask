@@ -38,6 +38,7 @@ dependencies {
     compile 'com.kyleduo.switchbutton:library:1.4.6'
     compile 'com.baoyz.swipemenulistview:library:1.3.0'
     compile 'org.litepal.android:core:1.6.0'
+    compile 'com.android.support:support-v4:25.3.1'
     testCompile 'junit:junit:4.12'
     apt 'com.zhy:mpermission-compiler:1.0.0'
     apt 'com.jakewharton:butterknife-compiler:8.4.0'

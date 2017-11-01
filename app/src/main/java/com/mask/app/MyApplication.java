@@ -1,6 +1,7 @@
 package com.mask.app;
 
 import android.app.Activity;
+import android.util.Log;
 
 import com.mask.bean.Light;
 import com.mask.bean.Lights;
@@ -43,15 +44,18 @@ public class MyApplication extends TelinkApplication {
     public void onCreate() {
         super.onCreate();
         instance = this;
-        LitePal.initialize(this);
-        SpUtils.init(this);
         AdvanceStrategy.setDefault(new MySampleAdvanceStrategy());
         this.startLightService(MyService.class);
         mesh = new Mesh();
         mesh.name = "AT-mesh";
         mesh.password = "123456";
-        mesh.factoryName = "AT-mesh";
-        mesh.factoryPassword = "123456";
+        mesh.factoryName = "out_of_mesh";
+        mesh.factoryPassword = "123";
+        LitePal.initialize(this);
+        SpUtils.init(this);
+
+
+
     }
 
     /**
@@ -87,12 +91,13 @@ public class MyApplication extends TelinkApplication {
 
     @Override
     public void doInit() {
-
-        String fileName = "telink-";
-        fileName += System.currentTimeMillis();
-        fileName += ".log";
-
         super.doInit();
+        if (mesh.saveOrUpdate()) {
+            setMesh(mesh);
+            Log.e("-------", "Save Mesh Success1");
+        } else {
+            Log.e("-------", "Save Mesh Success2");
+        }
         //AES.Security = true;
         if (FileSystem.exists("telink.meshs")) {
             this.mesh = (Mesh) FileSystem.readAsObject("telink.meshs");

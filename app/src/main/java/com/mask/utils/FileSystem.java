@@ -117,11 +117,13 @@ public abstract class FileSystem {
 
     public static Object readAsObject(String fileName) {
 
+
         File dir = Environment.getExternalStorageDirectory();
         File file = new File(dir, fileName);
 
-        if (!file.exists())
+        if (!file.exists()) {
             return null;
+        }
 
         FileInputStream fis = null;
         ObjectInputStream ois = null;

@@ -1,12 +1,14 @@
 package com.mask.activity;
 
-import android.Manifest;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.os.Handler;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.view.Gravity;
@@ -22,12 +24,29 @@ import com.kyleduo.switchbutton.SwitchButton;
 import com.mask.R;
 import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
+import com.mask.bean.Light;
+import com.mask.bean.Lights;
+import com.mask.bean.Mesh;
+import com.mask.service.MyService;
 import com.mask.utils.SpUtils;
 import com.mask.utils.Toastor;
 import com.mask.zxing.encoding.EncodingHandler;
-import com.zhy.m.permission.MPermissions;
-import com.zhy.m.permission.PermissionDenied;
-import com.zhy.m.permission.PermissionGrant;
+import com.telink.bluetooth.LeBluetooth;
+import com.telink.bluetooth.TelinkLog;
+import com.telink.bluetooth.event.DeviceEvent;
+import com.telink.bluetooth.event.MeshEvent;
+import com.telink.bluetooth.event.NotificationEvent;
+import com.telink.bluetooth.event.ServiceEvent;
+import com.telink.bluetooth.light.DeviceInfo;
+import com.telink.bluetooth.light.LeAutoConnectParameters;
+import com.telink.bluetooth.light.LeRefreshNotifyParameters;
+import com.telink.bluetooth.light.LightAdapter;
+import com.telink.bluetooth.light.OnlineStatusNotificationParser;
+import com.telink.bluetooth.light.Parameters;
+import com.telink.util.Event;
+import com.telink.util.EventListener;
+
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.OnClick;
@@ -37,7 +56,7 @@ import me.codeboy.android.aligntextview.AlignTextView;
 import static com.mask.utils.Constant.HEAD_PORTRAIT;
 import static com.mask.utils.Constant.id;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity implements EventListener<String> {
 
 
     @BindView(R.id.main_aqi)
@@ -82,9 +101,7 @@ public class MainActivity extends BaseActivity {
     ImageView qrCode;
     @BindView(R.id.main_kongzhi)
     LinearLayout mainKongZhi;
-    private BluetoothAdapter mBluetoothAdapter;
     Toastor toastor;
-    private final static int REQUECT_CODE_COARSE = 1;
     private MyApplication mApplication;
     @Override
     protected int getContentView() {
@@ -93,13 +110,23 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void init() {
+
         toastor = new Toastor(this);
-        initBLE();
         this.mApplication = (MyApplication) this.getApplication();
         this.mApplication.doInit();
+        this.mApplication.addEventListener(DeviceEvent.STATUS_CHANGED, this);
+        this.mApplication.addEventListener(NotificationEvent.ONLINE_STATUS, this);
+        this.mApplication.addEventListener(ServiceEvent.SERVICE_CONNECTED, this);
+        this.mApplication.addEventListener(MeshEvent.OFFLINE, this);
+        this.mApplication.addEventListener(MeshEvent.ERROR, this);
+        this.mApplication.addEventListener(MeshEvent.ERROR, this);
+        this.autoConnect();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
+        registerReceiver(mReceiver, filter);
 
     }
-
 
     @OnClick({R.id.main_cehua, R.id.main_fenxiang, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
     public void onViewClicked(View view) {
@@ -150,16 +177,17 @@ public class MainActivity extends BaseActivity {
     protected void onStop() {
         super.onStop();
         activityMain.closeDrawer(Gravity.LEFT);
+        this.mApplication.removeEventListener(this);
+        MyService.Instance().disableAutoRefreshNotify();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        mePicIv.setImageResource(id[SpUtils.getInt(HEAD_PORTRAIT, 0)]);
-        MPermissions.requestPermissions(MainActivity.this, REQUECT_CODE_COARSE,
-                Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mReceiver);
+        this.mApplication.doDestroy();
+        Lights.getInstance().clear();
     }
-
     //截取屏幕分享
  /*   private void UMShare(SHARE_MEDIA platform) {
 
@@ -179,33 +207,189 @@ public class MainActivity extends BaseActivity {
                 .setCallback(umShareListener)
                 .share();
     }*/
-    private void initBLE() {
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            toastor.showSingletonToast("设备不支持蓝牙4.0");
-            finish();
-        }
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-
-        if (mBluetoothAdapter == null) {
-            toastor.showSingletonToast("设备不支持蓝牙");
-            finish();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mePicIv.setImageResource(id[SpUtils.getInt(HEAD_PORTRAIT, 0)]);
+        if (!LeBluetooth.getInstance().isSupport(getApplicationContext())) {
+            Toast.makeText(this, "ble not support", Toast.LENGTH_SHORT).show();
+            this.finish();
             return;
         }
-        mBluetoothAdapter.enable();
+
+        if (!LeBluetooth.getInstance().isEnabled()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("123");
+            builder.setNeutralButton("cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    finish();
+                }
+            });
+            builder.setNegativeButton("enable", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    //LeBluetooth.getInstance().enable(getApplicationContext());
+                }
+            });
+            builder.show();
+        }
+
+
+
+
+
+
+
+    }
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
+
+                switch (state) {
+                    case BluetoothAdapter.STATE_ON:
+                        //蓝牙打开
+                        MyService.Instance().idleMode(true);
+                        autoConnect();
+                        break;
+                    case BluetoothAdapter.STATE_OFF:
+                        toastor.showSingletonToast("蓝牙关闭");
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
+    public void autoConnect() {
+
+        if (MyService.Instance() != null) {
+
+            if (MyService.Instance().getMode() != LightAdapter.MODE_AUTO_CONNECT_MESH) {
+
+                Lights.getInstance().clear();
+
+                if (this.mApplication.isEmptyMesh()) {
+                    return;
+                }
+
+                Mesh mesh = this.mApplication.getMesh();
+
+
+                LeAutoConnectParameters connectParams = Parameters.createAutoConnectParameters();
+
+                connectParams.setMeshName(mesh.name);
+                connectParams.setPassword(mesh.password);
+                connectParams.autoEnableNotification(true);
+                //�Զ�����
+                MyService.Instance().autoConnect(connectParams);
+            }
+
+            LeRefreshNotifyParameters refreshNotifyParams = Parameters.createRefreshNotifyParameters();
+            refreshNotifyParams.setRefreshRepeatCount(2);
+            refreshNotifyParams.setRefreshInterval(2000);
+
+            MyService.Instance().autoRefreshNotify(refreshNotifyParams);
+        }
     }
 
-    @PermissionGrant(REQUECT_CODE_COARSE)
-    public void requestSdcardSuccess() {
 
+    private void onDeviceStatusChanged(DeviceEvent event) {
 
+        DeviceInfo deviceInfo = event.getArgs();
+
+        switch (deviceInfo.status) {
+            case LightAdapter.STATUS_LOGIN:
+                toastor.showSingletonToast("login success");
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        MyService.Instance().sendCommandNoResponse((byte) 0xE4, 0xFFFF, new byte[]{});
+                    }
+                }, 3 * 1000);
+                break;
+            case LightAdapter.STATUS_CONNECTING:
+                toastor.showSingletonToast("login");
+                break;
+            case LightAdapter.STATUS_LOGOUT:
+                toastor.showSingletonToast("disconnect");
+                break;
+            default:
+                break;
+        }
     }
 
-    @PermissionDenied(REQUECT_CODE_COARSE)
-    public void requestSdcardFailed() {
-        toastor.showSingletonToast("程序主要权限获取失败,程序退出");
-        finish();
+    /**
+     * ����{@link NotificationEvent#ONLINE_STATUS}�¼�
+     *
+     * @param event
+     */
+    private void onOnlineStatusNotify(NotificationEvent event) {
+
+        TelinkLog.d("Thread ID : " + Thread.currentThread().getId());
+        List<OnlineStatusNotificationParser.DeviceNotificationInfo> notificationInfoList;
+        //noinspection unchecked
+        notificationInfoList = (List<OnlineStatusNotificationParser.DeviceNotificationInfo>) event.parse();
+
+        if (notificationInfoList == null || notificationInfoList.size() <= 0) {
+            return;
+        }
+
+
+
+        for (OnlineStatusNotificationParser.DeviceNotificationInfo notificationInfo : notificationInfoList) {
+
+            int meshAddress = notificationInfo.meshAddress;
+            int brightness = notificationInfo.brightness;
+            Light light = mApplication.get(meshAddress);
+
+            if (light == null) {
+                light = new Light();
+                this.mApplication.add(light);
+            }
+
+            light.meshAddress = meshAddress;
+            light.brightness = brightness;
+            light.status = notificationInfo.connectStatus;
+        }
+
+        //mHandler.obtainMessage(UPDATE_LIST).sendToTarget();
     }
 
+
+    @Override
+    public void performed(Event<String> event) {
+        //Log.e("----", event.getType());
+        switch (event.getType()) {
+            case NotificationEvent.ONLINE_STATUS:
+                this.onOnlineStatusNotify((NotificationEvent) event);
+                break;
+            case DeviceEvent.STATUS_CHANGED:
+                this.onDeviceStatusChanged((DeviceEvent) event);
+                break;
+            case MeshEvent.OFFLINE:
+                //this.onMeshOffline((MeshEvent) event);
+                break;
+            case MeshEvent.ERROR:
+                this.onMeshError((MeshEvent) event);
+                break;
+            case ServiceEvent.SERVICE_CONNECTED:
+                this.onServiceConnected((ServiceEvent) event);
+                break;
+            case ServiceEvent.SERVICE_DISCONNECTED:
+               // this.onServiceDisconnected((ServiceEvent) event);
+                break;
+            default:
+                break;
+        }
+    }
+    private void onServiceConnected(ServiceEvent event) {
+        this.autoConnect();
+    }
+    private void onMeshError(MeshEvent event) {
+        new AlertDialog.Builder(this).setMessage("蓝牙出问题了，重启蓝牙试试!!").show();
+    }
 }

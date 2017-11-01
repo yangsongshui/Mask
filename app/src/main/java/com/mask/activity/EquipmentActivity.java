@@ -59,7 +59,6 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
                 break;
             case R.id.iv_equipment_right:
                 MyService.Instance().idleMode(true);
-                MyService.Instance().Connect();
                 break;
             default:
                 break;

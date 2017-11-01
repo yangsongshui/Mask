@@ -46,6 +46,7 @@
             android:drawableEnd="@drawable/next"
             android:drawablePadding="10dp"
             android:gravity="center"
+            android:visibility="gone"
             android:padding="15dp"
             android:text="添加组"
             android:textColor="@color/white"
