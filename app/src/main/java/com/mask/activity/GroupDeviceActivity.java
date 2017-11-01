@@ -44,7 +44,7 @@ public class GroupDeviceActivity extends BaseActivity implements SwipeMenuListVi
         mList.add(new MyDevice("asd"));
         mList.add(new MyDevice("fdsf"));
         mList.add(new MyDevice("dfg"));
-        adapter = new EquipmentAdapter(mList, this);
+        adapter = new EquipmentAdapter( this);
         listView.setAdapter(adapter);
         listView.setMenuCreator(creator);
         listView.setOnMenuItemClickListener(this);

@@ -133,7 +133,6 @@ public abstract class LightService extends Service implements
 
         if (this.mAdapter == null)
             return;
-
         this.mAdapter.autoConnect(params, this);
     }
 

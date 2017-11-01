@@ -3,27 +3,38 @@ package com.mask.adapter;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.mask.R;
-import com.mask.base.MyBaseAdapter;
-import com.mask.bean.MyDevice;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.mask.bean.Light;
+import com.mask.bean.Lights;
 
 
 /**
  * Created by Administrator on 2016/3/25.
  */
-public class EquipmentAdapter extends MyBaseAdapter<MyDevice> {
+public class EquipmentAdapter extends BaseAdapter {
     Context mContext;
-    List<MyDevice> mList = new ArrayList<>();
 
-    public EquipmentAdapter(List<MyDevice> list, Context context) {
-        super(list);
+    public EquipmentAdapter(Context context) {
         mContext = context;
-        mList = list;
+
+    }
+
+    @Override
+    public int getCount() {
+        return Lights.getInstance().size();
+    }
+
+    @Override
+    public Light getItem(int position) {
+        return Lights.getInstance().get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
     }
 
     @Override
@@ -34,8 +45,9 @@ public class EquipmentAdapter extends MyBaseAdapter<MyDevice> {
                     R.layout.equipment_item, null);
             new ViewHolder(convertView);
         }
+        Light light = this.getItem(position);
         ViewHolder holder = (ViewHolder) convertView.getTag();
-        holder.device_name.setText(mList.get(position).getName());
+        holder.device_name.setText("口罩"+light.getLabel2());
         return convertView;
     }
 

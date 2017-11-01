@@ -7,10 +7,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageView;
@@ -19,7 +19,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.zxing.WriterException;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.mask.R;
 import com.mask.app.MyApplication;
@@ -30,7 +29,6 @@ import com.mask.bean.Mesh;
 import com.mask.service.MyService;
 import com.mask.utils.SpUtils;
 import com.mask.utils.Toastor;
-import com.mask.zxing.encoding.EncodingHandler;
 import com.telink.bluetooth.LeBluetooth;
 import com.telink.bluetooth.TelinkLog;
 import com.telink.bluetooth.event.DeviceEvent;
@@ -103,6 +101,7 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
     LinearLayout mainKongZhi;
     Toastor toastor;
     private MyApplication mApplication;
+
     @Override
     protected int getContentView() {
         return R.layout.activity_main;
@@ -110,7 +109,7 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
 
     @Override
     protected void init() {
-
+        TelinkLog.ENABLE = true;
         toastor = new Toastor(this);
         this.mApplication = (MyApplication) this.getApplication();
         this.mApplication.doInit();
@@ -118,7 +117,6 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         this.mApplication.addEventListener(NotificationEvent.ONLINE_STATUS, this);
         this.mApplication.addEventListener(ServiceEvent.SERVICE_CONNECTED, this);
         this.mApplication.addEventListener(MeshEvent.OFFLINE, this);
-        this.mApplication.addEventListener(MeshEvent.ERROR, this);
         this.mApplication.addEventListener(MeshEvent.ERROR, this);
         this.autoConnect();
         IntentFilter filter = new IntentFilter();
@@ -137,7 +135,7 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
                 break;
             case R.id.main_fenxiang:
                 //分享
-                mainKongZhi.setVisibility(View.GONE);
+             /*   mainKongZhi.setVisibility(View.GONE);
                 qrCode.setVisibility(View.VISIBLE);
                 try {
                     //获取输入的文本信息
@@ -154,7 +152,9 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
                     }
                 } catch (WriterException e) {
                     e.printStackTrace();
-                }
+                }*/
+                MyService.Instance().idleMode(true);
+                autoConnect();
                 break;
             case R.id.me_pic_iv:
                 //头像
@@ -188,6 +188,7 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         this.mApplication.doDestroy();
         Lights.getInstance().clear();
     }
+
     //截取屏幕分享
  /*   private void UMShare(SHARE_MEDIA platform) {
 
@@ -236,12 +237,8 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         }
 
 
-
-
-
-
-
     }
+
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -264,27 +261,25 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
             }
         }
     };
+
     public void autoConnect() {
+
 
         if (MyService.Instance() != null) {
 
             if (MyService.Instance().getMode() != LightAdapter.MODE_AUTO_CONNECT_MESH) {
-
                 Lights.getInstance().clear();
 
-                if (this.mApplication.isEmptyMesh()) {
+                if (this.mApplication.isEmptyMesh())
                     return;
-                }
 
                 Mesh mesh = this.mApplication.getMesh();
-
-
                 LeAutoConnectParameters connectParams = Parameters.createAutoConnectParameters();
-
+                Log.e("-------", mesh.name + mesh.password);
                 connectParams.setMeshName(mesh.name);
                 connectParams.setPassword(mesh.password);
                 connectParams.autoEnableNotification(true);
-                //�Զ�����
+
                 MyService.Instance().autoConnect(connectParams);
             }
 
@@ -339,11 +334,11 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         }
 
 
-
         for (OnlineStatusNotificationParser.DeviceNotificationInfo notificationInfo : notificationInfoList) {
 
             int meshAddress = notificationInfo.meshAddress;
             int brightness = notificationInfo.brightness;
+
             Light light = mApplication.get(meshAddress);
 
             if (light == null) {
@@ -362,12 +357,13 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
 
     @Override
     public void performed(Event<String> event) {
-        //Log.e("----", event.getType());
+      //  Log.e("----", event.getType());
         switch (event.getType()) {
             case NotificationEvent.ONLINE_STATUS:
                 this.onOnlineStatusNotify((NotificationEvent) event);
                 break;
             case DeviceEvent.STATUS_CHANGED:
+
                 this.onDeviceStatusChanged((DeviceEvent) event);
                 break;
             case MeshEvent.OFFLINE:
@@ -380,15 +376,17 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
                 this.onServiceConnected((ServiceEvent) event);
                 break;
             case ServiceEvent.SERVICE_DISCONNECTED:
-               // this.onServiceDisconnected((ServiceEvent) event);
+                // this.onServiceDisconnected((ServiceEvent) event);
                 break;
             default:
                 break;
         }
     }
+
     private void onServiceConnected(ServiceEvent event) {
         this.autoConnect();
     }
+
     private void onMeshError(MeshEvent event) {
         new AlertDialog.Builder(this).setMessage("蓝牙出问题了，重启蓝牙试试!!").show();
     }

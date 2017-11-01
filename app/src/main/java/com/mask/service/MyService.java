@@ -19,7 +19,6 @@ public class MyService extends LightService {
         return mThis;
     }
 
-    @Override
     public IBinder onBind(Intent paramIntent)
     {
         if (this.mBinder == null) {
@@ -28,7 +27,6 @@ public class MyService extends LightService {
         return super.onBind(paramIntent);
     }
 
-    @Override
     public void onCreate()
     {
         super.onCreate();

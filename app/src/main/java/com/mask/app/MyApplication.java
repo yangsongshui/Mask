@@ -31,6 +31,7 @@ public class MyApplication extends TelinkApplication {
     public static List<Activity> activitiesList = new ArrayList<Activity>(); // 活动管理集合
     private MyDevice myDevice;
     private Mesh mesh;
+
     /**
      * 获取单例
      *
@@ -44,17 +45,15 @@ public class MyApplication extends TelinkApplication {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        LitePal.initialize(this);
+        SpUtils.init(this);
         AdvanceStrategy.setDefault(new MySampleAdvanceStrategy());
         this.startLightService(MyService.class);
         mesh = new Mesh();
-        mesh.name = "AT-mesh";
-        mesh.password = "123456";
-        mesh.factoryName = "out_of_mesh";
+        mesh.name = "zhy_mesh1";
+        mesh.password = "123";
+        mesh.factoryName = "zhy_mesh1";
         mesh.factoryPassword = "123";
-        LitePal.initialize(this);
-        SpUtils.init(this);
-
-
 
     }
 
@@ -105,6 +104,7 @@ public class MyApplication extends TelinkApplication {
         //启动LightService
         this.startLightService(MyService.class);
     }
+
     public Mesh getMesh() {
         return this.mesh;
     }
@@ -116,6 +116,7 @@ public class MyApplication extends TelinkApplication {
     public boolean isEmptyMesh() {
         return this.mesh == null;
     }
+
     public MyDevice getMyDevice() {
         return myDevice;
     }
@@ -127,6 +128,7 @@ public class MyApplication extends TelinkApplication {
 
     public void add(Light light) {
         Lights.getInstance().add(light);
+        Log.e("-------", light.getLabel1());
     }
 
     public Light get(int meshAddress) {

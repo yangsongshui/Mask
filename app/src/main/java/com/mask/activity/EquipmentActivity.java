@@ -16,7 +16,6 @@ import com.mask.base.BaseActivity;
 import com.mask.bean.MyDevice;
 import com.mask.service.MyService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -37,13 +36,7 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
 
     @Override
     protected void init() {
-        mList = new ArrayList<>();
-        mList.add(new MyDevice("123"));
-        mList.add(new MyDevice("zsda"));
-        mList.add(new MyDevice("asd"));
-        mList.add(new MyDevice("fdsf"));
-        mList.add(new MyDevice("dfg"));
-        adapter = new EquipmentAdapter(mList, this);
+        adapter = new EquipmentAdapter(this);
         listView.setAdapter(adapter);
         listView.setMenuCreator(creator);
         listView.setOnMenuItemClickListener(this);
