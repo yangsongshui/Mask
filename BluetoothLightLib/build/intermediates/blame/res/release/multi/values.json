@@ -1,6 +1,6 @@
 [
     {
-        "outputFile": "/Users/yangsong/Downloads/Mask/BluetoothLightLib/build/intermediates/incremental/mergeReleaseResources/merged.dir/values/values.xml",
+        "outputFile": "D:\\AndroidStudioProjects\\Mask\\BluetoothLightLib\\build\\intermediates\\incremental\\mergeReleaseResources\\merged.dir\\values\\values.xml",
         "map": [
             {
                 "to": {
@@ -11,13 +11,13 @@
                     "endOffset": 105
                 },
                 "from": {
-                    "file": "/Users/yangsong/Downloads/Mask/BluetoothLightLib/src/main/res/values/strings.xml",
+                    "file": "D:\\AndroidStudioProjects\\Mask\\BluetoothLightLib\\src\\main\\res\\values\\strings.xml",
                     "position": {
                         "startLine": 1,
                         "startColumn": 4,
-                        "startOffset": 16,
+                        "startOffset": 17,
                         "endColumn": 54,
-                        "endOffset": 66
+                        "endOffset": 67
                     }
                 }
             }

@@ -31,6 +31,7 @@ public class MyApplication extends TelinkApplication {
     public static List<Activity> activitiesList = new ArrayList<Activity>(); // 活动管理集合
     private MyDevice myDevice;
     private Mesh mesh;
+    public String address;
 
     /**
      * 获取单例

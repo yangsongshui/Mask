@@ -19,5 +19,5 @@ public class Constant {
     public static final String HEAD_PORTRAIT = "head portrait";
     public static final  int[] id = {R.drawable.contact_github, R.drawable.contact_github, R.drawable.contact_github, R.drawable.contact_github,
             R.drawable.contact_github, R.drawable.contact_github, R.drawable.contact_github, R.drawable.contact_github};
-
+    public static final String WEATHER_URL = "http://route.showapi.com/";
 }

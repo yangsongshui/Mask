@@ -47,7 +47,9 @@
         <service
             android:name=".service.MyService"
             android:enabled="true" />
-
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="50ef1cd5e7b324b3ce9b7f952a69778a" />
 
     </application>
 

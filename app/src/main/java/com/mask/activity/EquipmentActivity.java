@@ -11,7 +11,6 @@ import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.mask.R;
 import com.mask.adapter.EquipmentAdapter;
-import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
 import com.mask.bean.MyDevice;
 import com.mask.service.MyService;
@@ -52,6 +51,7 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
                 break;
             case R.id.iv_equipment_right:
                 MyService.Instance().idleMode(true);
+                MyService.Instance().Connect();
                 break;
             default:
                 break;
@@ -83,7 +83,8 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        MyApplication.newInstance().setMyDevice(mList.get(position));
+
+        adapter.getItem(position).getLabel();
         finish();
     }
 
