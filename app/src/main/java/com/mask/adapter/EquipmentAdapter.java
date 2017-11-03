@@ -60,4 +60,11 @@ public class EquipmentAdapter extends BaseAdapter {
             view.setTag(this);
         }
     }
+    public void add(Light light) {
+        Lights.getInstance().add(light);
+    }
+
+    public Light get(int meshAddress) {
+        return Lights.getInstance().getByMeshAddress(meshAddress);
+    }
 }

@@ -4,9 +4,7 @@ import android.app.Activity;
 import android.util.Log;
 
 import com.mask.bean.Light;
-import com.mask.bean.Lights;
 import com.mask.bean.Mesh;
-import com.mask.bean.MyDevice;
 import com.mask.service.MyService;
 import com.mask.utils.FileSystem;
 import com.mask.utils.MySampleAdvanceStrategy;
@@ -26,13 +24,11 @@ import java.util.List;
 
 public class MyApplication extends TelinkApplication {
     private static final String TAG = "MyApplication";
-    public String bindMac;
     private static MyApplication instance;
     public static List<Activity> activitiesList = new ArrayList<Activity>(); // 活动管理集合
-    private MyDevice myDevice;
     private Mesh mesh;
     public String address;
-
+    public Light light;
     /**
      * 获取单例
      *
@@ -64,8 +60,9 @@ public class MyApplication extends TelinkApplication {
      * @param activity
      */
     public void addActyToList(Activity activity) {
-        if (!activitiesList.contains(activity))
+        if (!activitiesList.contains(activity)) {
             activitiesList.add(activity);
+        }
     }
 
     /**
@@ -74,8 +71,9 @@ public class MyApplication extends TelinkApplication {
      * @param activity
      */
     public void removeActyFromList(Activity activity) {
-        if (activitiesList.contains(activity))
+        if (activitiesList.contains(activity)) {
             activitiesList.remove(activity);
+        }
     }
 
     /**
@@ -83,8 +81,9 @@ public class MyApplication extends TelinkApplication {
      */
     public void clearAllActies() {
         for (Activity acty : activitiesList) {
-            if (acty != null)
+            if (acty != null) {
                 acty.finish();
+            }
         }
 
     }
@@ -118,21 +117,11 @@ public class MyApplication extends TelinkApplication {
         return this.mesh == null;
     }
 
-    public MyDevice getMyDevice() {
-        return myDevice;
+    public Light getLight() {
+        return light;
     }
 
-    public void setMyDevice(MyDevice myDevice) {
-        this.myDevice = myDevice;
-    }
-
-
-    public void add(Light light) {
-        Lights.getInstance().add(light);
-        Log.e("-------", light.getLabel1());
-    }
-
-    public Light get(int meshAddress) {
-        return Lights.getInstance().getByMeshAddress(meshAddress);
+    public void setLight(Light light) {
+        this.light = light;
     }
 }

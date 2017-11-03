@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Mask</string>
+    <string name="app_name">战尘沙</string>
     <string name="pm25">%s μg/m³</string>
     <string name="guolv">过滤膜%s</string>
     <string name="time">预计可用时间%s小时</string>

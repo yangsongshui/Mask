@@ -37,8 +37,12 @@ public class ToHex {
         String hex = "";
         hex = Integer.toHexString(Integer.parseInt(string));
         if (hex.length() == 1) {
-            hex = '0' + hex;
+            hex = "000" + hex;
 
+        } else if (hex.length() == 2) {
+            hex = "00" + hex;
+        } else if (hex.length() == 3) {
+            hex = '0' + hex;
         }
 
         return hex;

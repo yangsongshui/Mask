@@ -560,10 +560,12 @@ public abstract class LightService extends Service implements
 
     @Override
     public boolean onCommandSampled(byte opcode, int address, byte[] params, Object tag, int delay, boolean noResponse) {
-        if (this.mAdapter == null)
+        if (this.mAdapter == null) {
             return false;
-        if (noResponse)
+        }
+        if (noResponse) {
             return this.mAdapter.sendCommandNoResponse(opcode, address, params, tag, delay);
+        }
         return this.mAdapter.sendCommand(opcode, address, params, tag, delay);
     }
 }

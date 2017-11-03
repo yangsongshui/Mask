@@ -13,7 +13,10 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -28,28 +31,17 @@ import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
 import com.mask.bean.Light;
 import com.mask.bean.Lights;
-import com.mask.bean.Mesh;
 import com.mask.bean.Weather;
 import com.mask.service.MyService;
 import com.mask.utils.SpUtils;
 import com.mask.utils.Toastor;
 import com.mask.zxing.encoding.EncodingHandler;
+import com.telink.TelinkApplication;
 import com.telink.bluetooth.LeBluetooth;
 import com.telink.bluetooth.TelinkLog;
-import com.telink.bluetooth.event.DeviceEvent;
-import com.telink.bluetooth.event.MeshEvent;
-import com.telink.bluetooth.event.NotificationEvent;
-import com.telink.bluetooth.event.ServiceEvent;
+import com.telink.bluetooth.light.ConnectionStatus;
 import com.telink.bluetooth.light.DeviceInfo;
-import com.telink.bluetooth.light.LeAutoConnectParameters;
-import com.telink.bluetooth.light.LeRefreshNotifyParameters;
-import com.telink.bluetooth.light.LightAdapter;
-import com.telink.bluetooth.light.OnlineStatusNotificationParser;
-import com.telink.bluetooth.light.Parameters;
-import com.telink.util.Event;
-import com.telink.util.EventListener;
-
-import java.util.List;
+import com.telink.util.Arrays;
 
 import butterknife.BindView;
 import butterknife.OnClick;
@@ -65,8 +57,9 @@ import static com.mask.utils.Constant.ACTION_BLE_NOTIFY_DATA;
 import static com.mask.utils.Constant.HEAD_PORTRAIT;
 import static com.mask.utils.Constant.WEATHER_URL;
 import static com.mask.utils.Constant.id;
+import static com.mask.utils.ToHex.StringToHex;
 
-public class MainActivity extends BaseActivity implements EventListener<String> {
+public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChangeListener {
 
 
     @BindView(R.id.main_aqi)
@@ -123,9 +116,14 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
     ImageView qrCode;
     @BindView(R.id.main_kongzhi)
     LinearLayout mainKongZhi;
+    @BindView(R.id.time_ed)
+    EditText timeEd;
     Toastor toastor;
     private MyApplication mApplication;
     Retrofit retrofit;
+    Handler handler;
+    Runnable myRunnable;
+    public static final byte OPCODE = (byte) 0xEA;
 
     @Override
     protected int getContentView() {
@@ -138,12 +136,13 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         toastor = new Toastor(this);
         this.mApplication = (MyApplication) this.getApplication();
         this.mApplication.doInit();
-        this.mApplication.addEventListener(DeviceEvent.STATUS_CHANGED, this);
+        handler = new Handler();
+     /*   this.mApplication.addEventListener(DeviceEvent.STATUS_CHANGED, this);
         this.mApplication.addEventListener(NotificationEvent.ONLINE_STATUS, this);
         this.mApplication.addEventListener(ServiceEvent.SERVICE_CONNECTED, this);
         this.mApplication.addEventListener(MeshEvent.OFFLINE, this);
         this.mApplication.addEventListener(MeshEvent.ERROR, this);
-        this.autoConnect();
+       this.autoConnect();*/
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(ACTION_BLE_NOTIFY_DATA);
@@ -153,6 +152,17 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl(WEATHER_URL)
                 .build();
+        mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
+            @Override
+            public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
+                Log.e("ColorFragmen", src + "");
+                if (mApplication.getLight().meshAddress == src) {
+                    String data = Arrays.bytesToHexString(params, "");
+
+                }
+            }
+        });
+        seekbarSelf.setOnSeekBarChangeListener(this);
     }
 
     @OnClick({R.id.main_cehua, R.id.main_fenxiang, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
@@ -207,7 +217,7 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
     protected void onStop() {
         super.onStop();
         activityMain.closeDrawer(Gravity.LEFT);
-        this.mApplication.removeEventListener(this);
+        //this.mApplication.removeEventListener(this);
         MyService.Instance().disableAutoRefreshNotify();
     }
 
@@ -250,20 +260,41 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
 
         if (!LeBluetooth.getInstance().isEnabled()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("123");
-            builder.setNeutralButton("cancel", new DialogInterface.OnClickListener() {
+            builder.setMessage("是否打开蓝牙");
+            builder.setNeutralButton("取消", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     finish();
                 }
             });
-            builder.setNegativeButton("enable", new DialogInterface.OnClickListener() {
+            builder.setNegativeButton("开启", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    //LeBluetooth.getInstance().enable(getApplicationContext());
+                    LeBluetooth.getInstance().enable(getApplicationContext());
                 }
             });
             builder.show();
+        }
+        if (mApplication.getLight() != null) {
+            final Light light = mApplication.getLight();
+            mainName.setText("口罩" + light.getLabel2());
+            if (light.status == ConnectionStatus.ON) {
+                mainZhuangtai.setText("已开启");
+            } else {
+                mainZhuangtai.setText("未开启");
+            }
+            final byte opcode = (byte) 0xEA;
+            //PM2.5
+            MyService.Instance().sendCommand(opcode, light.meshAddress, Arrays.hexToBytes("AF0100000E"));
+            myRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    //电量
+                    MyService.Instance().sendCommand(opcode, light.meshAddress, Arrays.hexToBytes("AF0300000E"));
+                }
+            };
+            handler.postDelayed(myRunnable, 100);
+
         }
 
 
@@ -273,23 +304,7 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
-
-                switch (state) {
-                    case BluetoothAdapter.STATE_ON:
-                        //蓝牙打开
-                        MyService.Instance().idleMode(true);
-                        autoConnect();
-                        break;
-                    case BluetoothAdapter.STATE_OFF:
-                        toastor.showSingletonToast("蓝牙关闭");
-                        break;
-
-                    default:
-                        break;
-                }
-            } else if (ACTION_BLE_NOTIFY_DATA.equals(action)) {
+            if (ACTION_BLE_NOTIFY_DATA.equals(action)) {
                 mainAddress.setText(intent.getStringExtra("address"));
                 ServiceApi service = retrofit.create(ServiceApi.class);
                 Call<Weather> call = service.getWeather(MyApplication.newInstance().address, "1");
@@ -321,141 +336,16 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
     };
 
     private void initWeather(Weather weather) {
-        String  aqi=weather.getShowapi_res_body().getNow().getAqi();
+        String aqi = weather.getShowapi_res_body().getNow().getAqi();
         mainAqi.setText(aqi);
         mainHint.setText("温馨提示：" + weather.getShowapi_res_body().getF1().getIndex().getTravel().getDesc());
         setView(Integer.valueOf(aqi));
         setDianchi(50, Integer.valueOf(aqi));
-    }
-
-    public void autoConnect() {
-
-
-        if (MyService.Instance() != null) {
-
-            if (MyService.Instance().getMode() != LightAdapter.MODE_AUTO_CONNECT_MESH) {
-                Lights.getInstance().clear();
-
-                if (this.mApplication.isEmptyMesh()) {
-                    return;
-                }
-
-                Mesh mesh = this.mApplication.getMesh();
-                LeAutoConnectParameters connectParams = Parameters.createAutoConnectParameters();
-                Log.e("-------", mesh.name + mesh.password);
-                connectParams.setMeshName(mesh.name);
-                connectParams.setPassword(mesh.password);
-                connectParams.autoEnableNotification(true);
-
-                MyService.Instance().autoConnect(connectParams);
-            }
-
-            LeRefreshNotifyParameters refreshNotifyParams = Parameters.createRefreshNotifyParameters();
-            refreshNotifyParams.setRefreshRepeatCount(2);
-            refreshNotifyParams.setRefreshInterval(2000);
-
-            MyService.Instance().autoRefreshNotify(refreshNotifyParams);
+        //下发PM2.5的值
+        if (mApplication.getLight() != null) {
+            String msg = "AF08" + StringToHex(weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()) + "0E";
+            MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
         }
-    }
-
-
-    private void onDeviceStatusChanged(DeviceEvent event) {
-
-        DeviceInfo deviceInfo = event.getArgs();
-
-        switch (deviceInfo.status) {
-            case LightAdapter.STATUS_LOGIN:
-                toastor.showSingletonToast("login success");
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        MyService.Instance().sendCommandNoResponse((byte) 0xE4, 0xFFFF, new byte[]{});
-                    }
-                }, 3 * 1000);
-                break;
-            case LightAdapter.STATUS_CONNECTING:
-                toastor.showSingletonToast("login");
-                break;
-            case LightAdapter.STATUS_LOGOUT:
-                toastor.showSingletonToast("disconnect");
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * ����{@link NotificationEvent#ONLINE_STATUS}�¼�
-     *
-     * @param event
-     */
-    private void onOnlineStatusNotify(NotificationEvent event) {
-
-        TelinkLog.d("Thread ID : " + Thread.currentThread().getId());
-        List<OnlineStatusNotificationParser.DeviceNotificationInfo> notificationInfoList;
-        //noinspection unchecked
-        notificationInfoList = (List<OnlineStatusNotificationParser.DeviceNotificationInfo>) event.parse();
-
-        if (notificationInfoList == null || notificationInfoList.size() <= 0) {
-            return;
-        }
-
-
-        for (OnlineStatusNotificationParser.DeviceNotificationInfo notificationInfo : notificationInfoList) {
-
-            int meshAddress = notificationInfo.meshAddress;
-            int brightness = notificationInfo.brightness;
-
-            Light light = mApplication.get(meshAddress);
-
-            if (light == null) {
-                light = new Light();
-                this.mApplication.add(light);
-            }
-
-            light.meshAddress = meshAddress;
-            light.brightness = brightness;
-            light.status = notificationInfo.connectStatus;
-        }
-
-        //mHandler.obtainMessage(UPDATE_LIST).sendToTarget();
-    }
-
-
-    @Override
-    public void performed(Event<String> event) {
-        //  Log.e("----", event.getType());
-        switch (event.getType()) {
-            case NotificationEvent.ONLINE_STATUS:
-                this.onOnlineStatusNotify((NotificationEvent) event);
-                break;
-            case DeviceEvent.STATUS_CHANGED:
-
-                this.onDeviceStatusChanged((DeviceEvent) event);
-                break;
-            case MeshEvent.OFFLINE:
-                //this.onMeshOffline((MeshEvent) event);
-                break;
-            case MeshEvent.ERROR:
-                this.onMeshError((MeshEvent) event);
-                break;
-            case ServiceEvent.SERVICE_CONNECTED:
-                this.onServiceConnected((ServiceEvent) event);
-                break;
-            case ServiceEvent.SERVICE_DISCONNECTED:
-                // this.onServiceDisconnected((ServiceEvent) event);
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void onServiceConnected(ServiceEvent event) {
-        this.autoConnect();
-    }
-
-    private void onMeshError(MeshEvent event) {
-        new AlertDialog.Builder(this).setMessage("蓝牙出问题了，重启蓝牙试试!!").show();
     }
 
     private void setView(int AQI) {
@@ -525,5 +415,60 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         } else {
             mainDianchi.setImageResource(R.drawable.dianchi);
         }
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        //档位
+        if (mApplication.getLight() != null) {
+            String msg = "AF06" + StringToHex(seekBar.getProgress()+"") + "0E";
+            MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
+        }
+    }
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+            View v = getCurrentFocus();
+            if (isShouldHideInput(v, ev)) {
+                if(hideInputMethod(this, v)) {
+                    return true; //隐藏键盘时，其他控件不响应点击事件==》注释则不拦截点击事件
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+    public static boolean isShouldHideInput(View v, MotionEvent event) {
+        if (v != null && (v instanceof EditText)) {
+            int[] leftTop = { 0, 0 };
+            v.getLocationInWindow(leftTop);
+            int left = leftTop[0], top = leftTop[1], bottom = top + v.getHeight(), right = left
+                    + v.getWidth();
+            if (event.getX() > left && event.getX() < right
+                    && event.getY() > top && event.getY() < bottom) {
+                // 保留点击EditText的事件
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static Boolean hideInputMethod(Context context, View v) {
+        InputMethodManager imm = (InputMethodManager) context
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            return imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        }
+        return false;
     }
 }

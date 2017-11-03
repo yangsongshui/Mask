@@ -5,14 +5,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.mask.app.MyApplication;
-import com.mask.bean.Lights;
-import com.mask.bean.Mesh;
-import com.telink.bluetooth.light.LeAutoConnectParameters;
-import com.telink.bluetooth.light.LeRefreshNotifyParameters;
 import com.telink.bluetooth.light.LightAdapter;
 import com.telink.bluetooth.light.LightService;
-import com.telink.bluetooth.light.Parameters;
 
 /**
  * Created by Administrator on 2016/12/3.
@@ -25,6 +19,7 @@ public class MyService extends LightService {
         return mThis;
     }
 
+    @Override
     public IBinder onBind(Intent paramIntent)
     {
         if (this.mBinder == null) {
@@ -33,6 +28,7 @@ public class MyService extends LightService {
         return super.onBind(paramIntent);
     }
 
+    @Override
     public void onCreate()
     {
         super.onCreate();
@@ -52,35 +48,6 @@ public class MyService extends LightService {
         public MyService getService()
         {
             return MyService.this;
-        }
-    }
-    public void Connect() {
-
-
-        if (MyService.Instance() != null) {
-
-            if (MyService.Instance().getMode() != LightAdapter.MODE_AUTO_CONNECT_MESH) {
-                Lights.getInstance().clear();
-
-                if (MyApplication.newInstance().isEmptyMesh()) {
-                    return;
-                }
-
-                Mesh mesh = MyApplication.newInstance().getMesh();
-                LeAutoConnectParameters connectParams = Parameters.createAutoConnectParameters();
-                Log.e("-------", mesh.name + mesh.password);
-                connectParams.setMeshName(mesh.name);
-                connectParams.setPassword(mesh.password);
-                connectParams.autoEnableNotification(true);
-
-                MyService.Instance().autoConnect(connectParams);
-            }
-
-            LeRefreshNotifyParameters refreshNotifyParams = Parameters.createRefreshNotifyParameters();
-            refreshNotifyParams.setRefreshRepeatCount(2);
-            refreshNotifyParams.setRefreshInterval(2000);
-
-            MyService.Instance().autoRefreshNotify(refreshNotifyParams);
         }
     }
 }

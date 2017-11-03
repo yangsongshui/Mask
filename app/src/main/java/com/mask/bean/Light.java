@@ -31,6 +31,4 @@ public final class Light {
         return Integer.toString(this.meshAddress, 16);
     }
 
-
-
 }
