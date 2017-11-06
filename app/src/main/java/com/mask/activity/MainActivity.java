@@ -13,6 +13,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -32,7 +33,9 @@ import com.mask.base.BaseActivity;
 import com.mask.bean.Light;
 import com.mask.bean.Lights;
 import com.mask.bean.Weather;
+import com.mask.monitor.OnKeyDownListener;
 import com.mask.service.MyService;
+import com.mask.utils.ListenerKeyBackEditText;
 import com.mask.utils.SpUtils;
 import com.mask.utils.Toastor;
 import com.mask.zxing.encoding.EncodingHandler;
@@ -117,7 +120,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     @BindView(R.id.main_kongzhi)
     LinearLayout mainKongZhi;
     @BindView(R.id.time_ed)
-    EditText timeEd;
+    ListenerKeyBackEditText timeEd;
     Toastor toastor;
     private MyApplication mApplication;
     Retrofit retrofit;
@@ -137,12 +140,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         this.mApplication = (MyApplication) this.getApplication();
         this.mApplication.doInit();
         handler = new Handler();
-     /*   this.mApplication.addEventListener(DeviceEvent.STATUS_CHANGED, this);
-        this.mApplication.addEventListener(NotificationEvent.ONLINE_STATUS, this);
-        this.mApplication.addEventListener(ServiceEvent.SERVICE_CONNECTED, this);
-        this.mApplication.addEventListener(MeshEvent.OFFLINE, this);
-        this.mApplication.addEventListener(MeshEvent.ERROR, this);
-       this.autoConnect();*/
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(ACTION_BLE_NOTIFY_DATA);
@@ -163,15 +161,24 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             }
         });
         seekbarSelf.setOnSeekBarChangeListener(this);
+        timeEd.setOnKeyDownListener(new OnKeyDownListener() {
+            @Override
+            public void OnKeyDown(int keyCode, KeyEvent event) {
+                timeEd.setVisibility(View.GONE);
+                mainTiem.setVisibility(View.VISIBLE);
+                if (!timeEd.getText().toString().equals("")) {
+                    mainTiem.setText(timeEd.getText().toString());
+                }
+            }
+        });
     }
 
-    @OnClick({R.id.main_cehua, R.id.main_fenxiang, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
+    @OnClick({R.id.main_cehua, R.id.main_tiem, R.id.main_fenxiang, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.main_cehua:
                 //侧滑
                 activityMain.openDrawer(GravityCompat.START);
-
                 break;
             case R.id.main_fenxiang:
                 //分享
@@ -207,6 +214,13 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             case R.id.main_add_tv:
                 //添加组
                 startActivity(new Intent(this, GroupActivity.class));
+                break;
+            case R.id.main_tiem:
+                timeEd.setVisibility(View.VISIBLE);
+                mainTiem.setVisibility(View.GONE);
+                timeEd.requestFocus();
+                InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
                 break;
             default:
                 break;
@@ -294,9 +308,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 }
             };
             handler.postDelayed(myRunnable, 100);
-
         }
-
 
     }
 
@@ -431,31 +443,40 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     public void onStopTrackingTouch(SeekBar seekBar) {
         //档位
         if (mApplication.getLight() != null) {
-            String msg = "AF06" + StringToHex(seekBar.getProgress()+"") + "0E";
+            String msg = "AF06" + StringToHex(seekBar.getProgress() + "") + "0E";
             MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
         }
     }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             View v = getCurrentFocus();
             if (isShouldHideInput(v, ev)) {
-                if(hideInputMethod(this, v)) {
-                    return true; //隐藏键盘时，其他控件不响应点击事件==》注释则不拦截点击事件
+                timeEd.setVisibility(View.GONE);
+                mainTiem.setVisibility(View.VISIBLE);
+                if (!timeEd.getText().toString().equals("")) {
+                    mainTiem.setText(timeEd.getText().toString());
+                }
+                if (hideInputMethod(this, v)) {
+                    return false; //隐藏键盘时，其他控件不响应点击事件==》注释则不拦截点击事件
                 }
             }
         }
         return super.dispatchTouchEvent(ev);
     }
+
     public static boolean isShouldHideInput(View v, MotionEvent event) {
         if (v != null && (v instanceof EditText)) {
-            int[] leftTop = { 0, 0 };
+            int[] leftTop = {0, 0};
             v.getLocationInWindow(leftTop);
             int left = leftTop[0], top = leftTop[1], bottom = top + v.getHeight(), right = left
                     + v.getWidth();
             if (event.getX() > left && event.getX() < right
                     && event.getY() > top && event.getY() < bottom) {
                 // 保留点击EditText的事件
+
                 return false;
             } else {
                 return true;
@@ -463,7 +484,10 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         }
         return false;
     }
+
+
     public static Boolean hideInputMethod(Context context, View v) {
+
         InputMethodManager imm = (InputMethodManager) context
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {

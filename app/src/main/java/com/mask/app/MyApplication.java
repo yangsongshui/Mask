@@ -47,10 +47,10 @@ public class MyApplication extends TelinkApplication {
         AdvanceStrategy.setDefault(new MySampleAdvanceStrategy());
         this.startLightService(MyService.class);
         mesh = new Mesh();
-        mesh.name = "zhy_mesh1";
-        mesh.password = "123";
-        mesh.factoryName = "zhy_mesh1";
-        mesh.factoryPassword = "123";
+        mesh.name = "AT-mesh";
+        mesh.password = "123456";
+        mesh.factoryName = "AT-mesh";
+        mesh.factoryPassword = "123456";
 
     }
 

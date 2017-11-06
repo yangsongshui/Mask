@@ -431,7 +431,9 @@
                             android:layout_marginStart="10dp"
                             android:background="@drawable/ed_bg"
                             android:paddingBottom="5dp"
-
+                            android:gravity="center"
+                            android:focusableInTouchMode="true"
+                            android:focusable="true"
                             android:paddingTop="5dp">
 
                             <TextView
@@ -440,14 +442,15 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
                                 android:text="10"
-                                android:visibility="gone" />
+                              />
 
-                            <EditText
+                            <com.mask.utils.ListenerKeyBackEditText
                                 android:id="@+id/time_ed"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:background="@null"
                                 android:paddingEnd="5dp"
+                                android:visibility="gone"
                                 android:textSize="12sp"
                                 android:paddingStart="5dp"
                                 android:inputType="number"
