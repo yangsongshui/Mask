@@ -41,9 +41,12 @@ public class AddActivity extends BaseActivity {
                 if (!et.getText().toString().equals("")) {
                     MyGroup group = new MyGroup();
                     group.setName(et.getText().toString());
-                    if (group.save())
+                    if (group.save()) {
                         finish();
+                    }
                 }
+                break;
+            default:
                 break;
         }
     }
