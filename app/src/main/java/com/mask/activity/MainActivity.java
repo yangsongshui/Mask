@@ -126,7 +126,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     Retrofit retrofit;
     Handler handler;
     Runnable myRunnable;
-    public static final byte OPCODE = (byte) 0xEA;
+    public static final byte OPCODE = (byte) 0xE4;
 
     @Override
     protected int getContentView() {
@@ -150,16 +150,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl(WEATHER_URL)
                 .build();
-        mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
-            @Override
-            public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
-                Log.e("ColorFragmen", src + "");
-                if (mApplication.getLight().meshAddress == src) {
-                    String data = Arrays.bytesToHexString(params, "");
 
-                }
-            }
-        });
         seekbarSelf.setOnSeekBarChangeListener(this);
         timeEd.setOnKeyDownListener(new OnKeyDownListener() {
             @Override
@@ -271,7 +262,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             this.finish();
             return;
         }
-
+        MyService.Instance().enableNotification();
         if (!LeBluetooth.getInstance().isEnabled()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("是否打开蓝牙");
@@ -297,18 +288,32 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             } else {
                 mainZhuangtai.setText("未开启");
             }
-            final byte opcode = (byte) 0xEA;
+
             //PM2.5
-            MyService.Instance().sendCommand(opcode, light.meshAddress, Arrays.hexToBytes("AF0100000E"));
+            MyService.Instance().sendCommand(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0100000E"));
             myRunnable = new Runnable() {
                 @Override
                 public void run() {
                     //电量
-                    MyService.Instance().sendCommand(opcode, light.meshAddress, Arrays.hexToBytes("AF0300000E"));
+                    MyService.Instance().sendCommand(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0300000E"));
                 }
             };
-            handler.postDelayed(myRunnable, 100);
+            handler.postDelayed(myRunnable, 1000);
         }
+
+        mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
+            @Override
+            public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
+                Log.e("ColorFragmen", src + "" + Arrays.bytesToHexString(params, ""));
+                if (mApplication.getLight() != null) {
+                    if (mApplication.getLight().meshAddress == src) {
+                        String data = Arrays.bytesToHexString(params, "");
+
+                    }
+                }
+            }
+        });
+
 
     }
 

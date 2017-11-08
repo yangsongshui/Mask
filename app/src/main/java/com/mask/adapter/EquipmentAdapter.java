@@ -47,7 +47,7 @@ public class EquipmentAdapter extends BaseAdapter {
         }
         Light light = this.getItem(position);
         ViewHolder holder = (ViewHolder) convertView.getTag();
-        holder.device_name.setText("口罩"+light.getLabel2());
+        holder.device_name.setText("口罩" + light.getLabel2());
         return convertView;
     }
 
@@ -60,11 +60,17 @@ public class EquipmentAdapter extends BaseAdapter {
             view.setTag(this);
         }
     }
+
     public void add(Light light) {
         Lights.getInstance().add(light);
     }
 
     public Light get(int meshAddress) {
         return Lights.getInstance().getByMeshAddress(meshAddress);
+    }
+
+    public void delete(int position) {
+        Lights.getInstance().remove(position);
+        notifyDataSetChanged();
     }
 }

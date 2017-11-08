@@ -111,14 +111,14 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        mApplication.setLight( adapter.getItem(position));
+        mApplication.setLight(adapter.getItem(position));
 
         finish();
     }
 
     @Override
     public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
-        mList.remove(position);
+        adapter.delete(index);
         adapter.notifyDataSetChanged();
         return false;
     }
@@ -240,7 +240,7 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        MyService.Instance().sendCommandNoResponse((byte) 0xE4, 0xFFFF, new byte[]{});
+                        MyService.Instance().sendCommand((byte) 0xE4, 0xFFFF, new byte[]{});
                     }
                 }, 3 * 1000);
                 break;

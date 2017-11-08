@@ -661,9 +661,9 @@ public final class LightController extends EventBus<Integer> implements LightPer
 
         byte[] macAddress = this.light.getMacBytes();
         byte[] nonce = this.getSecIVM(macAddress, sn);
-        //Log.e("------加密前",Arrays.bytesToHexString(commandData,","));
+        Log.e("------加密前",Arrays.bytesToHexString(commandData,","));
         byte[] data = AES.encrypt(sk, nonce, commandData);
-       // Log.e("------加密后",Arrays.bytesToHexString(data,","));
+        Log.e("------加密后",Arrays.bytesToHexString(data,","));
         Manufacture manufacture = Manufacture.getDefault();
         UUID serviceUUID = manufacture.getUUID(Manufacture.UUIDType.SERVICE);
         UUID characteristicUUID = manufacture.getUUID(Manufacture.UUIDType.COMMAND);
