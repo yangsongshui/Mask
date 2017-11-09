@@ -83,7 +83,7 @@ public abstract class LightService extends Service implements
      * params.setScanMode(true);
      * SmartLightService.getInstance().startScan(params);
      * }</pre>
-     *
+     * <p>
      * <p>启动扫描后,通过{@link LightService#ACTION_LE_SCAN}动作广播发现到的设备,广播参数{@link LightService#EXTRA_DEVICE}
      * 表示发现的设备{@link DeviceInfo}.
      * <p>当扫描超过指定的时间,会发送{@link LightService#ACTION_LE_SCAN_TIMEOUT}动作的广播.
@@ -342,7 +342,7 @@ public abstract class LightService extends Service implements
     public void updateNotification() {
         if (this.mAdapter == null)
             return;
-        Log.e("-------","刷新所有设备状态");
+        Log.e("-------", "刷新所有设备状态");
         this.mAdapter.updateNotification();
     }
 
@@ -535,6 +535,7 @@ public abstract class LightService extends Service implements
             deviceInfo.meshUUID = light.getMeshUUID();
             deviceInfo.productUUID = light.getProductUUID();
             notifyInfo.deviceInfo = deviceInfo;
+            Log.e("params",  deviceInfo.meshAddress+"");
         }
 
         intent.putExtra(EXTRA_NOTIFY, notifyInfo);

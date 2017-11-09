@@ -11,6 +11,8 @@ import com.mask.utils.MySampleAdvanceStrategy;
 import com.mask.utils.SpUtils;
 import com.telink.TelinkApplication;
 import com.telink.bluetooth.light.AdvanceStrategy;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
 import org.litepal.LitePal;
 
@@ -24,11 +26,14 @@ import java.util.List;
 
 public class MyApplication extends TelinkApplication {
     private static final String TAG = "MyApplication";
+    private static final String APP_ID = "wxc001bb724de65ab2";
     private static MyApplication instance;
     public static List<Activity> activitiesList = new ArrayList<Activity>(); // 活动管理集合
     private Mesh mesh;
     public String address;
     public Light light;
+    private IWXAPI api;
+
     /**
      * 获取单例
      *
@@ -123,5 +128,9 @@ public class MyApplication extends TelinkApplication {
 
     public void setLight(Light light) {
         this.light = light;
+    }
+    private void reToWx(){
+        api= WXAPIFactory.createWXAPI(this,APP_ID,true);
+        api.registerApp(APP_ID);
     }
 }

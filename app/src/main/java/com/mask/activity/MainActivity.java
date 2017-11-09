@@ -126,7 +126,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     Retrofit retrofit;
     Handler handler;
     Runnable myRunnable;
-    public static final byte OPCODE = (byte) 0xE4;
+    public static final byte OPCODE = (byte) 0xEA;
 
     @Override
     protected int getContentView() {
@@ -172,7 +172,9 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 activityMain.openDrawer(GravityCompat.START);
                 break;
             case R.id.main_fenxiang:
-                //分享
+
+
+              //分享
                 mainKongZhi.setVisibility(View.GONE);
                 qrCode.setVisibility(View.VISIBLE);
                 try {
@@ -222,8 +224,8 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     protected void onStop() {
         super.onStop();
         activityMain.closeDrawer(Gravity.LEFT);
-        //this.mApplication.removeEventListener(this);
-        MyService.Instance().disableAutoRefreshNotify();
+
+         MyService.Instance().disableAutoRefreshNotify();
     }
 
     @Override
@@ -262,7 +264,19 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             this.finish();
             return;
         }
-        MyService.Instance().enableNotification();
+
+        mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
+            @Override
+            public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
+                Log.e("ColorFragmen", src + "  " + Arrays.bytesToHexString(params, ""));
+                if (mApplication.getLight() != null) {
+                    if (mApplication.getLight().meshAddress == src) {
+                        String data = Arrays.bytesToHexString(params, "");
+
+                    }
+                }
+            }
+        });
         if (!LeBluetooth.getInstance().isEnabled()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("是否打开蓝牙");
@@ -281,6 +295,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             builder.show();
         }
         if (mApplication.getLight() != null) {
+            Log.e("ColorFragmen", mApplication.getConnectDevice().deviceName + " " + mApplication.getConnectDevice().meshAddress);
             final Light light = mApplication.getLight();
             mainName.setText("口罩" + light.getLabel2());
             if (light.status == ConnectionStatus.ON) {
@@ -290,29 +305,16 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             }
 
             //PM2.5
-            MyService.Instance().sendCommand(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0100000E"));
-            myRunnable = new Runnable() {
+            MyService.Instance().sendCommandNoResponse(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0100000E"));
+           myRunnable = new Runnable() {
                 @Override
                 public void run() {
                     //电量
-                    MyService.Instance().sendCommand(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0300000E"));
+                    MyService.Instance().sendCommandNoResponse(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0300000E"));
                 }
             };
             handler.postDelayed(myRunnable, 1000);
         }
-
-        mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
-            @Override
-            public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
-                Log.e("ColorFragmen", src + "" + Arrays.bytesToHexString(params, ""));
-                if (mApplication.getLight() != null) {
-                    if (mApplication.getLight().meshAddress == src) {
-                        String data = Arrays.bytesToHexString(params, "");
-
-                    }
-                }
-            }
-        });
 
 
     }
@@ -361,7 +363,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         //下发PM2.5的值
         if (mApplication.getLight() != null) {
             String msg = "AF08" + StringToHex(weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()) + "0E";
-            MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
+            // MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
         }
     }
 
@@ -449,7 +451,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         //档位
         if (mApplication.getLight() != null) {
             String msg = "AF06" + StringToHex(seekBar.getProgress() + "") + "0E";
-            MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
+            //  MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
         }
     }
 

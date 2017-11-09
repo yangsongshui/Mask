@@ -55,7 +55,7 @@ public final class OnlineStatusNotificationParser extends NotificationParser<Lis
                 notificationInfoList = new ArrayList<>();
 
             deviceNotifyInfo = new DeviceNotificationInfo();
-            deviceNotifyInfo.meshAddress = meshAddress;
+            deviceNotifyInfo.meshAddress = notifyInfo.deviceInfo.meshAddress;
             deviceNotifyInfo.brightness = brightness;
             deviceNotifyInfo.reserve = reserve;
             deviceNotifyInfo.status = status;

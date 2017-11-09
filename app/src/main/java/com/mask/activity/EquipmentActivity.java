@@ -237,12 +237,6 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
         switch (deviceInfo.status) {
             case LightAdapter.STATUS_LOGIN:
                 toastor.showSingletonToast("login success");
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        MyService.Instance().sendCommand((byte) 0xE4, 0xFFFF, new byte[]{});
-                    }
-                }, 3 * 1000);
                 break;
             case LightAdapter.STATUS_CONNECTING:
                 toastor.showSingletonToast("login");

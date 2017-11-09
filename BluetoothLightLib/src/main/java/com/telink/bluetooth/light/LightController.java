@@ -661,9 +661,9 @@ public final class LightController extends EventBus<Integer> implements LightPer
 
         byte[] macAddress = this.light.getMacBytes();
         byte[] nonce = this.getSecIVM(macAddress, sn);
-        Log.e("------加密前",Arrays.bytesToHexString(commandData,","));
+        //Log.e("------加密前",Arrays.bytesToHexString(commandData,","));
         byte[] data = AES.encrypt(sk, nonce, commandData);
-        Log.e("------加密后",Arrays.bytesToHexString(data,","));
+       // Log.e("------加密后",Arrays.bytesToHexString(data,","));
         Manufacture manufacture = Manufacture.getDefault();
         UUID serviceUUID = manufacture.getUUID(Manufacture.UUIDType.SERVICE);
         UUID characteristicUUID = manufacture.getUUID(Manufacture.UUIDType.COMMAND);
@@ -693,7 +693,9 @@ public final class LightController extends EventBus<Integer> implements LightPer
 
         return success;
     }
-    boolean isOne=false;
+
+    boolean isOne = false;
+
     public boolean sendCommand(Command.Callback callback, byte opcode, int address, byte[] params, boolean noResponse, Object tag, int delay) {
 
         int sn = this.generateSequenceNumber();
@@ -729,7 +731,7 @@ public final class LightController extends EventBus<Integer> implements LightPer
         if (params != null) {
             System.arraycopy(params, 0, command, offset, params.length);
         }
-        android.util.Log.e("1------指令", Arrays.bytesToHexString(command,",") + "");
+        android.util.Log.e("------指令", Arrays.bytesToHexString(command,",") + "");
         return this.sendCommand(callback, command, noResponse, tag, delay);
     }
 
@@ -876,9 +878,10 @@ public final class LightController extends EventBus<Integer> implements LightPer
         byte[] macAddress = light.getMacBytes();
         byte[] nonce = getSecIVS(macAddress);
         System.arraycopy(data, 0, nonce, 3, 5);
+       // Log.e("-------", "Notify Data --> " + Arrays.bytesToHexString(data, ","));
         byte[] result = AES.decrypt(this.sessionKey, nonce, data);
 
-        Log.e("-------","Notify Data --> " + Arrays.bytesToHexString(result, ","));
+       Log.e("-------","Notify Data --> " + Arrays.bytesToHexString(result, ","));
 
         this.onDeviceAddressNotify(data, tag);
         this.dispatchEvent(new LightEvent(LightEvent.NOTIFICATION_RECEIVE, result));
