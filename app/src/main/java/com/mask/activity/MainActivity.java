@@ -1,6 +1,7 @@
 package com.mask.activity;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -127,6 +128,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     Handler handler;
     Runnable myRunnable;
     public static final byte OPCODE = (byte) 0xEA;
+    private ProgressDialog pd;
 
     @Override
     protected int getContentView() {
@@ -140,7 +142,8 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         this.mApplication = (MyApplication) this.getApplication();
         this.mApplication.doInit();
         handler = new Handler();
-
+        pd = new ProgressDialog(this);
+        pd.setMessage("数据加载中...");
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(ACTION_BLE_NOTIFY_DATA);
@@ -150,7 +153,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl(WEATHER_URL)
                 .build();
-
+        pd.show();
         seekbarSelf.setOnSeekBarChangeListener(this);
         timeEd.setOnKeyDownListener(new OnKeyDownListener() {
             @Override
@@ -174,7 +177,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             case R.id.main_fenxiang:
 
 
-              //分享
+                //分享
                 mainKongZhi.setVisibility(View.GONE);
                 qrCode.setVisibility(View.VISIBLE);
                 try {
@@ -225,7 +228,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         super.onStop();
         activityMain.closeDrawer(Gravity.LEFT);
 
-         MyService.Instance().disableAutoRefreshNotify();
+        MyService.Instance().disableAutoRefreshNotify();
     }
 
     @Override
@@ -268,10 +271,16 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
             @Override
             public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
-                Log.e("ColorFragmen", src + "  " + Arrays.bytesToHexString(params, ""));
+
                 if (mApplication.getLight() != null) {
                     if (mApplication.getLight().meshAddress == src) {
+                        Log.e("ColorFragmen", src + "  " + Arrays.bytesToHexString(params, ""));
                         String data = Arrays.bytesToHexString(params, "");
+                        if (params[0] == 0xAF) {
+                            setData(params);
+
+                        }
+
 
                     }
                 }
@@ -297,7 +306,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         if (mApplication.getLight() != null) {
             Log.e("ColorFragmen", mApplication.getConnectDevice().deviceName + " " + mApplication.getConnectDevice().meshAddress);
             final Light light = mApplication.getLight();
-            mainName.setText("口罩" + light.getLabel2());
+            mainName.setText("口罩" + light.getLabel2() + ":");
             if (light.status == ConnectionStatus.ON) {
                 mainZhuangtai.setText("已开启");
             } else {
@@ -306,7 +315,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
             //PM2.5
             MyService.Instance().sendCommandNoResponse(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0100000E"));
-           myRunnable = new Runnable() {
+            myRunnable = new Runnable() {
                 @Override
                 public void run() {
                     //电量
@@ -322,6 +331,9 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (pd.isShowing()) {
+                pd.dismiss();
+            }
             String action = intent.getAction();
             if (ACTION_BLE_NOTIFY_DATA.equals(action)) {
                 mainAddress.setText(intent.getStringExtra("address"));
@@ -356,14 +368,16 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
     private void initWeather(Weather weather) {
         String aqi = weather.getShowapi_res_body().getNow().getAqi();
+        mainPm.setText(String.format(getString(R.string.pm25), weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()));
         mainAqi.setText(aqi);
+        mainAqi2.setText(aqi);
         mainHint.setText("温馨提示：" + weather.getShowapi_res_body().getF1().getIndex().getTravel().getDesc());
         setView(Integer.valueOf(aqi));
         setDianchi(50, Integer.valueOf(aqi));
         //下发PM2.5的值
         if (mApplication.getLight() != null) {
             String msg = "AF08" + StringToHex(weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()) + "0E";
-            // MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
+            MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
         }
     }
 
@@ -372,12 +386,14 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             guangyun.setImageResource(R.drawable.guangyun);
             activityMain.setBackgroundResource(R.drawable.bg);
             mainYou.setText("优");
+            mainJibie.setText("一级");
             mainYou.setBackgroundResource(R.drawable.pm_you);
             mainAqi.setBackgroundResource(R.drawable.yuanbai);
         } else if (AQI < 100) {
             guangyun.setImageResource(R.drawable.guangyun2);
             activityMain.setBackgroundResource(R.drawable.bg2);
             mainYou.setText("良");
+            mainJibie.setText("二级");
             mainTianqi.setImageResource(R.drawable.tianqi);
             mainYou.setBackgroundResource(R.drawable.pm_liang);
         } else if (AQI < 150) {
@@ -385,28 +401,32 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             activityMain.setBackgroundResource(R.drawable.bg3);
             mainTianqi.setImageResource(R.drawable.tianqi);
             mainYou.setText("轻度污染");
+            mainJibie.setText("三级");
             mainYou.setBackgroundResource(R.drawable.pm_zhong);
         } else if (AQI < 200) {
             guangyun.setImageResource(R.drawable.guangyun4);
             activityMain.setBackgroundResource(R.drawable.bg4);
             mainTianqi.setImageResource(R.drawable.tianqi2);
             mainYou.setText("中度污染");
+            mainJibie.setText("四级");
             mainYou.setBackgroundResource(R.drawable.pm_yanzhong);
         } else if (AQI < 300) {
             guangyun.setImageResource(R.drawable.guangyun5);
             mainTianqi.setImageResource(R.drawable.tianqi2);
             activityMain.setBackgroundResource(R.drawable.bg4);
             mainYou.setText("重度污染");
+            mainJibie.setText("五级");
             mainYou.setBackgroundResource(R.drawable.pm_yanzhong2);
         } else if (AQI < 500) {
             guangyun.setImageResource(R.drawable.guangyun6);
             activityMain.setBackgroundResource(R.drawable.bg5);
             mainYou.setText("严重污染");
+            mainJibie.setText("六级");
             mainYou.setBackgroundResource(R.drawable.pm_yanzhong3);
         } else {
             guangyun.setImageResource(R.drawable.guangyun6);
             activityMain.setBackgroundResource(R.drawable.bg5);
-
+            mainJibie.setText("六级");
             mainYou.setText("严重污染");
             mainYou.setBackgroundResource(R.drawable.pm_yanzhong3);
         }
@@ -451,7 +471,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         //档位
         if (mApplication.getLight() != null) {
             String msg = "AF06" + StringToHex(seekBar.getProgress() + "") + "0E";
-            //  MyService.Instance().sendCommand(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
+            MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
         }
     }
 
@@ -501,5 +521,32 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             return imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
         }
         return false;
+    }
+
+    private void setData(byte[] data) {
+        //设备数据
+        switch (data[1]) {
+            case 0x01:
+            case 0x02:
+                mainPm.setText(String.format(getString(R.string.pm25), "20"));
+                break;
+            case 0x03:
+                //电量
+                mainYuji.setText(String.format(getString(R.string.time), "2"));
+                mainDianliang.setText("50%");
+            case 0x04:
+                //电量
+                mainYuji.setText(String.format(getString(R.string.time), "2"));
+                mainDianliang.setText("50%");
+                break;
+            case 0x06:
+                break;
+            case 0x07:
+                break;
+            default:
+                //过滤膜
+                mainGuolv.setText(String.format(getString(R.string.guolv),"10"));
+                break;
+        }
     }
 }

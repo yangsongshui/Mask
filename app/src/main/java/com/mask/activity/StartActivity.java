@@ -51,6 +51,7 @@ public class StartActivity extends BaseActivity {
         //获取一次定位结果
         mLocationOption.setOnceLocation(true);
         mLocationOption.setOnceLocationLatest(true);
+        mLocationOption.setInterval(6000);
         mLocationOption.setNeedAddress(true);
         //给定位客户端对象设置定位参数
         mLocationClient.setLocationOption(mLocationOption);
@@ -102,24 +103,21 @@ public class StartActivity extends BaseActivity {
         @Override
         public void onLocationChanged(AMapLocation aMapLocation) {
             if (aMapLocation != null) {
+                Intent intent = new Intent();
                 if (aMapLocation.getErrorCode() == 0) {
                     //可在其中解析amapLocation获取相应内容。
                     Log.e("定位数据", aMapLocation.toString());
                     MyApplication.newInstance().address = aMapLocation.getCity();
-
-                    Intent intent = new Intent();
-                    intent.putExtra("address",  aMapLocation.getAddress());
-                    intent.setAction(ACTION_BLE_NOTIFY_DATA);
-                    sendBroadcast(intent);
+                    intent.putExtra("address", aMapLocation.getAddress());
 
                 } else {
                     Log.e("AmapError", "location Error, ErrCode:"
                             + aMapLocation.getErrorCode() + ", errInfo:"
                             + aMapLocation.getErrorInfo());
-                    toastor.showSingletonToast("定位失败:" + aMapLocation.getErrorInfo());
-
-
+                    toastor.showSingletonToast("定位失败");
                 }
+                intent.setAction(ACTION_BLE_NOTIFY_DATA);
+                sendBroadcast(intent);
             }
         }
     };

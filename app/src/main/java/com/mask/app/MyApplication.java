@@ -30,7 +30,7 @@ public class MyApplication extends TelinkApplication {
     private static MyApplication instance;
     public static List<Activity> activitiesList = new ArrayList<Activity>(); // 活动管理集合
     private Mesh mesh;
-    public String address;
+    public String address="北京";
     public Light light;
     private IWXAPI api;
 
