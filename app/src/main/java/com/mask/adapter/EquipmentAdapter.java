@@ -54,7 +54,6 @@ public class EquipmentAdapter extends BaseAdapter {
 
     class ViewHolder {
         TextView device_name;
-
         public ViewHolder(View view) {
             device_name = (TextView) view.findViewById(R.id.device_name);
             view.setTag(this);

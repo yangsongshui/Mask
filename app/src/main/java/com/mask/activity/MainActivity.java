@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -25,7 +24,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.zxing.WriterException;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.mask.R;
 import com.mask.api.ServiceApi;
@@ -39,7 +37,6 @@ import com.mask.service.MyService;
 import com.mask.utils.ListenerKeyBackEditText;
 import com.mask.utils.SpUtils;
 import com.mask.utils.Toastor;
-import com.mask.zxing.encoding.EncodingHandler;
 import com.telink.TelinkApplication;
 import com.telink.bluetooth.LeBluetooth;
 import com.telink.bluetooth.TelinkLog;
@@ -175,9 +172,9 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 activityMain.openDrawer(GravityCompat.START);
                 break;
             case R.id.main_fenxiang:
+                MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0100000E"));
 
-
-                //分享
+             /*   //分享
                 mainKongZhi.setVisibility(View.GONE);
                 qrCode.setVisibility(View.VISIBLE);
                 try {
@@ -195,7 +192,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                     }
                 } catch (WriterException e) {
                     e.printStackTrace();
-                }
+                }*/
 
                 break;
             case R.id.me_pic_iv:
@@ -271,13 +268,16 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
             @Override
             public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
-
+                Log.e("ColorFragmen", src + "  " + Arrays.bytesToHexString(params, ""));
                 if (mApplication.getLight() != null) {
                     if (mApplication.getLight().meshAddress == src) {
-                        Log.e("ColorFragmen", src + "  " + Arrays.bytesToHexString(params, ""));
+
                         String data = Arrays.bytesToHexString(params, "");
-                        if (params[0] == 0xAF) {
-                            setData(params);
+                        mainYuji.setText(data);
+                        if (params[0] == (byte)0xAF) {
+                            Toast.makeText(MainActivity.this, data, Toast.LENGTH_SHORT).show();
+                           // setData(params);
+
 
                         }
 
@@ -545,7 +545,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 break;
             default:
                 //过滤膜
-                mainGuolv.setText(String.format(getString(R.string.guolv),"10"));
+                mainGuolv.setText(String.format(getString(R.string.guolv), "10"));
                 break;
         }
     }
