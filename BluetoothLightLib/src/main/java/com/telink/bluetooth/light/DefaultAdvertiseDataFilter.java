@@ -26,7 +26,7 @@ public final class DefaultAdvertiseDataFilter implements AdvertiseDataFilter<Lig
     public LightPeripheral filter(BluetoothDevice device, int rssi, byte[] scanRecord) {
 
         TelinkLog.d(device.getName() + "-->" + Arrays.bytesToHexString(scanRecord, ":"));
-
+        String addree = device.getAddress();
         int length = scanRecord.length;
         int packetPosition = 0;
         int packetContentLength;
@@ -73,6 +73,7 @@ public final class DefaultAdvertiseDataFilter implements AdvertiseDataFilter<Lig
                     int productUUID = scanRecord[position++] + (scanRecord[position++] << 8);
                     int status = scanRecord[position++] & 0xFF;
                     int meshAddress = scanRecord[position++] + (scanRecord[position] << 8);
+                    //int meshAddress = Integer.valueOf((addree.substring(addree.length() - 2, addree.length()) + addree.substring(addree.length() - 5, addree.length() - 3)), 16);
 
                     LightPeripheral light = new LightPeripheral(device, scanRecord, rssi, meshName, meshAddress);
                     light.putAdvProperty(LightPeripheral.ADV_MESH_NAME, meshName);

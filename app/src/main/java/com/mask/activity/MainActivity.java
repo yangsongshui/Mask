@@ -136,7 +136,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     protected void init() {
         TelinkLog.ENABLE = true;
         toastor = new Toastor(this);
-        this.mApplication = (MyApplication) this.getApplication();
+        this.mApplication = MyApplication.newInstance();
         this.mApplication.doInit();
         handler = new Handler();
         pd = new ProgressDialog(this);
