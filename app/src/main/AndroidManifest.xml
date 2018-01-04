@@ -17,7 +17,6 @@
     <!-- 允许程序访问CellID或WiFi热点来获取粗略的位置 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
     <application
         android:name=".app.MyApplication"
         android:allowBackup="true"
@@ -35,7 +34,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".zxing.activity.CaptureActivity" />
+        <activity android:name=".wxapi.WXEntryActivity" android:exported="true"/>
         <activity android:name=".activity.EquipmentActivity" />
         <activity android:name=".activity.GroupActivity" />
         <activity android:name=".activity.AddActivity" />
@@ -43,9 +42,11 @@
         <activity android:name=".activity.PortraitActivity" />
         <activity android:name=".activity.GroupDeviceActivity" />
 
+        <service android:name="com.amap.api.location.APSService" />
         <service
             android:name=".service.MyService"
             android:enabled="true" />
+
         <meta-data
             android:name="com.amap.api.v2.apikey"
             android:value="50ef1cd5e7b324b3ce9b7f952a69778a" />

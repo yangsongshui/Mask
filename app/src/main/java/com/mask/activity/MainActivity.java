@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -17,6 +19,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -29,25 +32,28 @@ import com.mask.R;
 import com.mask.api.ServiceApi;
 import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
-import com.mask.bean.Light;
 import com.mask.bean.Lights;
 import com.mask.bean.Weather;
 import com.mask.monitor.OnKeyDownListener;
 import com.mask.service.MyService;
 import com.mask.utils.ListenerKeyBackEditText;
 import com.mask.utils.SpUtils;
+import com.mask.utils.ToHex;
 import com.mask.utils.Toastor;
 import com.telink.TelinkApplication;
 import com.telink.bluetooth.LeBluetooth;
 import com.telink.bluetooth.TelinkLog;
-import com.telink.bluetooth.light.ConnectionStatus;
 import com.telink.bluetooth.light.DeviceInfo;
 import com.telink.util.Arrays;
+import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
+import com.tencent.mm.opensdk.modelmsg.WXImageObject;
+import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
+
+import java.io.ByteArrayOutputStream;
 
 import butterknife.BindView;
 import butterknife.OnClick;
 import de.hdodenhof.circleimageview.CircleImageView;
-import me.codeboy.android.aligntextview.AlignTextView;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -59,6 +65,7 @@ import static com.mask.utils.Constant.HEAD_PORTRAIT;
 import static com.mask.utils.Constant.WEATHER_URL;
 import static com.mask.utils.Constant.id;
 import static com.mask.utils.ToHex.StringToHex;
+import static com.mask.utils.ToHex.byteToInt;
 
 public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChangeListener {
 
@@ -74,9 +81,9 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     @BindView(R.id.main_cehua)
     ImageView mainCehua;
     @BindView(R.id.main_address)
-    AlignTextView mainAddress;
+    TextView mainAddress;
     @BindView(R.id.main_hint)
-    AlignTextView mainHint;
+    TextView mainHint;
     @BindView(R.id.main_tianqi)
     ImageView mainTianqi;
     @BindView(R.id.main_you)
@@ -123,7 +130,6 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     private MyApplication mApplication;
     Retrofit retrofit;
     Handler handler;
-    Runnable myRunnable;
     public static final byte OPCODE = (byte) 0xEA;
     private ProgressDialog pd;
 
@@ -162,9 +168,38 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 }
             }
         });
+        mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
+            @Override
+            public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
+
+                if (mApplication.getLight() != null) {
+                    if (mApplication.getLight().meshAddress == src) {
+                        if (params[0] == (byte) 0xAF) {
+                            //  Toast.makeText(MainActivity.this, data, Toast.LENGTH_SHORT).show();
+                            setData(params);
+                        }
+                    }
+                }
+            }
+        });
+        mainGuolv.setText(String.format(getString(R.string.guolv), "0"));
+        setDingshi.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if (mApplication.getLight() != null) {
+                    if (isChecked) {
+                        String msg = "AF1A" + StringToHex(mainTiem.getText() + "") + "0E";
+                        MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
+                    }
+                    MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, isChecked ? Arrays.hexToBytes("AF0500010E") : Arrays.hexToBytes("AF0500000E"));
+                }
+
+            }
+        });
     }
 
-    @OnClick({R.id.main_cehua, R.id.main_tiem, R.id.main_fenxiang, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
+    @OnClick({R.id.main_cehua, R.id.main_tiem, R.id.main_fenxiang, R.id.main_out_tv, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.main_cehua:
@@ -172,32 +207,24 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 activityMain.openDrawer(GravityCompat.START);
                 break;
             case R.id.main_fenxiang:
-                MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0100000E"));
-
-             /*   //分享
-                mainKongZhi.setVisibility(View.GONE);
+                //分享
                 qrCode.setVisibility(View.VISIBLE);
-                try {
-                    //获取输入的文本信息
-                    String str = "123456";
-                    if (str != null && !"".equals(str.trim())) {
-                        //根据输入的文本生成对应的二维码并且显示出来
-                        Bitmap mBitmap = EncodingHandler.createQRCode(str, 500);
-                        if (mBitmap != null) {
-                            Toast.makeText(this, "二维码生成成功！", Toast.LENGTH_SHORT).show();
-                            qrCode.setImageBitmap(mBitmap);
-                        }
-                    } else {
-                        Toast.makeText(this, "文本信息不能为空！", Toast.LENGTH_SHORT).show();
+                mainKongZhi.setVisibility(View.GONE);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        UMShare();
                     }
-                } catch (WriterException e) {
-                    e.printStackTrace();
-                }*/
+                }, 500);
 
                 break;
             case R.id.me_pic_iv:
                 //头像
                 startActivity(new Intent(this, PortraitActivity.class));
+                break;
+            case R.id.main_out_tv:
+
+                finish();
                 break;
             case R.id.main_equipment_tv:
                 //设备列表
@@ -237,7 +264,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     }
 
     //截取屏幕分享
- /*   private void UMShare(SHARE_MEDIA platform) {
+    private void UMShare() {
 
         View viewScreen = getWindow().getDecorView();
         viewScreen.setDrawingCacheEnabled(true);
@@ -247,45 +274,37 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         int height = getWindow().getDecorView().getRootView().getHeight();
         Bitmap bitmap = Bitmap.createBitmap(viewScreen.getDrawingCache(), 0, 0, width, height);
         viewScreen.destroyDrawingCache();
-        UMImage image = new UMImage(HistoryActivity.this, bitmap);//bitmap文件
+        WXImageObject imageObject = new WXImageObject(bitmap);
+        WXMediaMessage msg = new WXMediaMessage();
+        msg.mediaObject = imageObject;
+        Bitmap shareBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.logo);
+        Bitmap thumbBmp = Bitmap.createScaledBitmap(shareBitmap, 100, 100, true);
+        msg.thumbData = bmpToByteArray(thumbBmp);  // 设置缩略图
+       /* UMImage image = new UMImage(HistoryActivity.this, bitmap);//bitmap文件
         image.compressStyle = UMImage.CompressStyle.QUALITY;
         new ShareAction(HistoryActivity.this).setPlatform(platform)
                 .withText("飘爱检测仪")
                 .withMedia(image)
                 .setCallback(umShareListener)
-                .share();
-    }*/
+                .share();*/
+        SendMessageToWX.Req req = new SendMessageToWX.Req();
+        req.transaction = buildTransaction("img");
+        req.message = msg;
+        req.scene = SendMessageToWX.Req.WXSceneTimeline;
+        mApplication.api.sendReq(req);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         mePicIv.setImageResource(id[SpUtils.getInt(HEAD_PORTRAIT, 0)]);
+        qrCode.setVisibility(View.GONE);
+        mainKongZhi.setVisibility(View.VISIBLE);
         if (!LeBluetooth.getInstance().isSupport(getApplicationContext())) {
             Toast.makeText(this, "ble not support", Toast.LENGTH_SHORT).show();
             this.finish();
             return;
         }
-
-        mApplication.setOnDeviceNotifyData(new TelinkApplication.onDeviceNotifyData() {
-            @Override
-            public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
-                Log.e("ColorFragmen", src + "  " + Arrays.bytesToHexString(params, ""));
-                if (mApplication.getLight() != null) {
-                    if (mApplication.getLight().meshAddress == src) {
-
-                        String data = Arrays.bytesToHexString(params, "");
-                        mainYuji.setText(data);
-                        if (params[0] == (byte)0xAF) {
-                            Toast.makeText(MainActivity.this, data, Toast.LENGTH_SHORT).show();
-                           // setData(params);
-
-
-                        }
-
-
-                    }
-                }
-            }
-        });
         if (!LeBluetooth.getInstance().isEnabled()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("是否打开蓝牙");
@@ -304,6 +323,17 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             builder.show();
         }
         if (mApplication.getLight() != null) {
+            MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0100000E"));
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0300000E"));
+                }
+            }, 200);
+
+        }
+
+        /*if (mApplication.getLight() != null) {
             Log.e("ColorFragmen", mApplication.getConnectDevice().deviceName + " " + mApplication.getConnectDevice().meshAddress);
             final Light light = mApplication.getLight();
             mainName.setText("口罩" + light.getLabel2() + ":");
@@ -323,7 +353,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 }
             };
             handler.postDelayed(myRunnable, 1000);
-        }
+        }*/
 
 
     }
@@ -336,6 +366,8 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             }
             String action = intent.getAction();
             if (ACTION_BLE_NOTIFY_DATA.equals(action)) {
+
+                Log.e("刷新天气数据", intent.getStringExtra("address"));
                 mainAddress.setText(intent.getStringExtra("address"));
                 ServiceApi service = retrofit.create(ServiceApi.class);
                 Call<Weather> call = service.getWeather(MyApplication.newInstance().address, "1");
@@ -344,15 +376,13 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                     public void onResponse(Call<Weather> call, Response<Weather> response) {
                         //请求成功操作
                         Weather weather = response.body();
-                        Log.e("weather", weather.toString());
+
                         if (weather.getShowapi_res_code() == 0) {
                             initWeather(weather);
 
                         } else {
                             toastor.showSingletonToast("天气查询失败");
-
                         }
-
                     }
 
                     @Override
@@ -365,18 +395,22 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             }
         }
     };
+    int AQI = 0;
 
     private void initWeather(Weather weather) {
         String aqi = weather.getShowapi_res_body().getNow().getAqi();
-        mainPm.setText(String.format(getString(R.string.pm25), weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()));
+        if (mApplication.getLight() == null)
+            mainPm.setText(String.format(getString(R.string.pm25), weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()));
         mainAqi.setText(aqi);
         mainAqi2.setText(aqi);
         mainHint.setText("温馨提示：" + weather.getShowapi_res_body().getF1().getIndex().getTravel().getDesc());
-        setView(Integer.valueOf(aqi));
-        setDianchi(50, Integer.valueOf(aqi));
+        AQI = Integer.valueOf(aqi);
+        setView(Integer.valueOf(AQI));
+
+        setDianchi(50, AQI);
         //下发PM2.5的值
         if (mApplication.getLight() != null) {
-            String msg = "AF08" + StringToHex(weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()) + "0E";
+            String msg = "AF01" + StringToHex(weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()) + "0E";
             MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
         }
     }
@@ -449,11 +483,34 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     }
 
     private void setDianchi(int dianliang, int AQI) {
+
         if (AQI > 150) {
-            mainDianchi.setImageResource(R.drawable.dianchi2);
+            if (dianliang == 1) {
+                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianliang.setText("25%");
+            } else if (dianliang == 2) {
+                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianliang.setText("50%");
+            } else if (dianliang == 3) {
+                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianliang.setText("75%");
+            } else if (dianliang == 4) {
+                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianliang.setText("100%");
+            }
         } else {
-            mainDianchi.setImageResource(R.drawable.dianchi);
+            if (dianliang == 1) {
+                mainDianliang.setText("25%");
+            } else if (dianliang == 2) {
+                mainDianliang.setText("50%");
+            } else if (dianliang == 3) {
+                mainDianliang.setText("75%");
+            } else if (dianliang == 4) {
+                mainDianliang.setText("100%");
+                mainDianchi.setImageResource(R.drawable.dianchi);
+            }
         }
+
     }
 
     @Override
@@ -487,7 +544,8 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                     mainTiem.setText(timeEd.getText().toString());
                 }
                 if (hideInputMethod(this, v)) {
-                    return false; //隐藏键盘时，其他控件不响应点击事件==》注释则不拦截点击事件
+                    //隐藏键盘时，其他控件不响应点击事件==》注释则不拦截点击事件
+                    return false;
                 }
             }
         }
@@ -524,29 +582,54 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     }
 
     private void setData(byte[] data) {
+        Log.e("ColorFragmen", Arrays.bytesToHexString(data, ""));
         //设备数据
         switch (data[1]) {
-            case 0x01:
             case 0x02:
-                mainPm.setText(String.format(getString(R.string.pm25), "20"));
+                String msg = Integer.parseInt(ToHex.bytesToHex(new byte[]{data[2], data[3]}), 16) + "";
+                mainPm.setText(String.format(getString(R.string.pm25), msg));
                 break;
-            case 0x03:
-                //电量
-                mainYuji.setText(String.format(getString(R.string.time), "2"));
-                mainDianliang.setText("50%");
             case 0x04:
                 //电量
-                mainYuji.setText(String.format(getString(R.string.time), "2"));
-                mainDianliang.setText("50%");
-                break;
-            case 0x06:
+                setDianchi(data[3], AQI);
+                if (data[2] == 1) {
+                    mainYuji.setText("充电中");
+                } else if (data[2] == 3) {
+                    mainYuji.setText("已充满");
+                } else {
+                    mainYuji.setText(String.format(getString(R.string.time), byteToInt(data[3]) + ""));
+                }
+
                 break;
             case 0x07:
+                seekbarSelf.setProgress(byteToInt(data[3]));
+                if (byteToInt(data[3]) > 0) {
+                    mainZhuangtai.setText("已开启");
+                } else {
+                    mainZhuangtai.setText("未开启");
+                }
                 break;
             default:
                 //过滤膜
-                mainGuolv.setText(String.format(getString(R.string.guolv), "10"));
+                //mainGuolv.setText(String.format(getString(R.string.guolv), "10"));
                 break;
         }
+    }
+
+    private static byte[] bmpToByteArray(Bitmap bmp) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, output);
+
+        byte[] result = output.toByteArray();
+        try {
+            output.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private static String buildTransaction(String type) {
+        return (type == null) ? String.valueOf(System.currentTimeMillis()) : type + System.currentTimeMillis();
     }
 }

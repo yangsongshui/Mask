@@ -88,12 +88,6 @@ public class ToHex {
         String str = "";
         for (int i = 0; i < stirng.length(); i = i + REQUEST_ENABLE_BT) {
             String parseInt = Integer.parseInt(stirng.substring(i, i + REQUEST_ENABLE_BT), 16) + "";
-
-            if (parseInt.length() == 2) {
-                parseInt = "0" + parseInt;
-            } else if (parseInt.length() == 1) {
-                parseInt = "00" + parseInt;
-            }
             str += parseInt;
         }
         return str;
@@ -179,5 +173,20 @@ public class ToHex {
             re = Integer.parseInt(byteStr, 2);
         }
         return (byte) re;
+    } public static String StringToHex3(String string) {
+        String hex = "";
+        hex = Integer.toHexString(Integer.parseInt(string));
+        if (hex.length() == 1) {
+            hex = "000" + hex;
+
+        } else if (hex.length() == 2) {
+            hex = "00" + hex;
+
+        } else if (hex.length() == 3) {
+            hex = "0" + hex;
+
+        }
+
+        return hex;
     }
 }

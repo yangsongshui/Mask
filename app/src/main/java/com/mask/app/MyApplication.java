@@ -27,12 +27,13 @@ import java.util.List;
 public class MyApplication extends TelinkApplication {
     private static final String TAG = "MyApplication";
     private static final String APP_ID = "wxc001bb724de65ab2";
+
     private static MyApplication instance;
     public static List<Activity> activitiesList = new ArrayList<Activity>(); // 活动管理集合
     private Mesh mesh;
     public String address="北京";
     public Light light;
-    private IWXAPI api;
+    public  IWXAPI api;
 
     /**
      * 获取单例
@@ -51,6 +52,7 @@ public class MyApplication extends TelinkApplication {
         SpUtils.init(this);
         AdvanceStrategy.setDefault(new MySampleAdvanceStrategy());
         this.startLightService(MyService.class);
+        reToWx();
         mesh = new Mesh();
         mesh.name = "AT-mesh";
         mesh.password = "123456";

@@ -38,7 +38,17 @@
             android:text="设备列表"
             android:textColor="@color/white"
             android:textSize="16sp" />
-
+        <TextView
+            android:id="@+id/main_out_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/next"
+            android:drawablePadding="10dp"
+            android:gravity="center"
+            android:padding="15dp"
+            android:text="退出"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
         <TextView
             android:id="@+id/main_add_tv"
             android:layout_width="match_parent"

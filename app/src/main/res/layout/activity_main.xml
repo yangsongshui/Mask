@@ -108,7 +108,7 @@
                         android:layout_height="wrap_content"
                         android:src="@drawable/dingwei" />
 
-                    <me.codeboy.android.aligntextview.AlignTextView
+                    <TextView
                         android:id="@+id/main_address"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -117,7 +117,7 @@
                         android:textColor="@color/white"
                         android:textSize="12sp" />
 
-                    <me.codeboy.android.aligntextview.AlignTextView
+                    <TextView
                         android:id="@+id/main_hint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -277,7 +277,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="51"
+                            android:text=""
                             android:textColor="@color/white" />
                     </LinearLayout>
 
@@ -304,7 +304,7 @@
                 android:layout_gravity="end"
                 android:layout_marginEnd="20dp"
                 android:layout_marginTop="5dp"
-                android:text="预计可用时间1小时"
+                android:text=""
                 android:textColor="@color/white" />
 
             <LinearLayout
@@ -326,7 +326,7 @@
                     android:id="@+id/main_zhuangtai"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="已开启"
+                    android:text="已关闭"
                     android:textColor="@color/white" />
 
                 <LinearLayout
@@ -342,7 +342,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_marginEnd="10dp"
-                        android:text="10%"
+                        android:text="0%"
                         android:textColor="@color/white" />
 
                     <ImageView
@@ -358,6 +358,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
+                android:src="@drawable/erweima"
                 android:layout_marginTop="15dp"
                 android:visibility="gone" />
 
