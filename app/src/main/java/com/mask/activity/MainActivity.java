@@ -486,28 +486,31 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
         if (AQI > 150) {
             if (dianliang == 1) {
-                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianchi.setImageResource(R.drawable.dianchi2_1);
                 mainDianliang.setText("25%");
             } else if (dianliang == 2) {
-                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianchi.setImageResource(R.drawable.dianchi2_2);
                 mainDianliang.setText("50%");
             } else if (dianliang == 3) {
-                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianchi.setImageResource(R.drawable.dianchi2_3);
                 mainDianliang.setText("75%");
             } else if (dianliang == 4) {
-                mainDianchi.setImageResource(R.drawable.dianchi2);
+                mainDianchi.setImageResource(R.drawable.dianchi2_4);
                 mainDianliang.setText("100%");
             }
         } else {
             if (dianliang == 1) {
                 mainDianliang.setText("25%");
+                mainDianchi.setImageResource(R.drawable.dianchi_1);
             } else if (dianliang == 2) {
                 mainDianliang.setText("50%");
+                mainDianchi.setImageResource(R.drawable.dianchi_2);
             } else if (dianliang == 3) {
                 mainDianliang.setText("75%");
+                mainDianchi.setImageResource(R.drawable.dianchi_3);
             } else if (dianliang == 4) {
                 mainDianliang.setText("100%");
-                mainDianchi.setImageResource(R.drawable.dianchi);
+                mainDianchi.setImageResource(R.drawable.dianchi_4);
             }
         }
 
