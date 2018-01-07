@@ -202,9 +202,7 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
 
     public void autoConnect() {
 
-
         if (MyService.Instance() != null) {
-
             if (MyService.Instance().getMode() != LightAdapter.MODE_AUTO_CONNECT_MESH) {
                 Lights.getInstance().clear();
 

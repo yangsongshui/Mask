@@ -3,6 +3,7 @@ package com.mask.activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -33,6 +34,7 @@ import com.mask.api.ServiceApi;
 import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
 import com.mask.bean.Lights;
+import com.mask.bean.Mesh;
 import com.mask.bean.Weather;
 import com.mask.monitor.OnKeyDownListener;
 import com.mask.service.MyService;
@@ -44,6 +46,10 @@ import com.telink.TelinkApplication;
 import com.telink.bluetooth.LeBluetooth;
 import com.telink.bluetooth.TelinkLog;
 import com.telink.bluetooth.light.DeviceInfo;
+import com.telink.bluetooth.light.LeAutoConnectParameters;
+import com.telink.bluetooth.light.LeRefreshNotifyParameters;
+import com.telink.bluetooth.light.LightAdapter;
+import com.telink.bluetooth.light.Parameters;
 import com.telink.util.Arrays;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.WXImageObject;
@@ -94,8 +100,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     TextView aqi;
     @BindView(R.id.main_pm)
     TextView mainPm;
-    @BindView(R.id.main_aqi2)
-    TextView mainAqi2;
+
     @BindView(R.id.kongqi)
     TextView kongQi;
     @BindView(R.id.main_guolv)
@@ -150,6 +155,8 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(ACTION_BLE_NOTIFY_DATA);
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
         registerReceiver(mReceiver, filter);
         retrofit = new Retrofit.Builder()
@@ -280,13 +287,6 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         Bitmap shareBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.logo);
         Bitmap thumbBmp = Bitmap.createScaledBitmap(shareBitmap, 100, 100, true);
         msg.thumbData = bmpToByteArray(thumbBmp);  // 设置缩略图
-       /* UMImage image = new UMImage(HistoryActivity.this, bitmap);//bitmap文件
-        image.compressStyle = UMImage.CompressStyle.QUALITY;
-        new ShareAction(HistoryActivity.this).setPlatform(platform)
-                .withText("飘爱检测仪")
-                .withMedia(image)
-                .setCallback(umShareListener)
-                .share();*/
         SendMessageToWX.Req req = new SendMessageToWX.Req();
         req.transaction = buildTransaction("img");
         req.message = msg;
@@ -323,37 +323,19 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             builder.show();
         }
         if (mApplication.getLight() != null) {
-            MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0100000E"));
+            MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0300000E"));
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0300000E"));
+
+                    MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0100000E"));
+                    handler.postDelayed(this, 2000);
                 }
             }, 200);
-
+            mainZhuangtai.setText("已开启");
+        } else {
+            mainZhuangtai.setText("未开启");
         }
-
-        /*if (mApplication.getLight() != null) {
-            Log.e("ColorFragmen", mApplication.getConnectDevice().deviceName + " " + mApplication.getConnectDevice().meshAddress);
-            final Light light = mApplication.getLight();
-            mainName.setText("口罩" + light.getLabel2() + ":");
-            if (light.status == ConnectionStatus.ON) {
-                mainZhuangtai.setText("已开启");
-            } else {
-                mainZhuangtai.setText("未开启");
-            }
-
-            //PM2.5
-            MyService.Instance().sendCommandNoResponse(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0100000E"));
-            myRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    //电量
-                    MyService.Instance().sendCommandNoResponse(OPCODE, light.meshAddress, Arrays.hexToBytes("AF0300000E"));
-                }
-            };
-            handler.postDelayed(myRunnable, 1000);
-        }*/
 
 
     }
@@ -392,6 +374,33 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                         toastor.showSingletonToast("天气查询失败");
                     }
                 });
+            } else if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                        BluetoothAdapter.ERROR);
+                switch (state) {
+                    case BluetoothAdapter.STATE_OFF:
+                        Log.d("aaa", "STATE_OFF 手机蓝牙关闭");
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_OFF:
+                        Log.d("aaa", "STATE_TURNING_OFF 手机蓝牙正在关闭");
+                        break;
+                    case BluetoothAdapter.STATE_ON:
+                        Log.d("aaa", "STATE_ON 手机蓝牙开启");
+                        MyService.Instance().idleMode(true);
+                        autoConnect();
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_ON:
+                        Log.d("aaa", "STATE_TURNING_ON 手机蓝牙正在开启");
+                        break;
+                }
+            } else if (action.equals(BluetoothDevice.ACTION_ACL_CONNECTED)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                Log.d("aaa", device.getName() + " ACTION_ACL_CONNECTED");
+            } else if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECTED)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                Log.d("aaa", device.getName() + " ACTION_ACL_DISCONNECTED");
+                MyService.Instance().idleMode(true);
+                autoConnect();
             }
         }
     };
@@ -402,7 +411,6 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         if (mApplication.getLight() == null)
             mainPm.setText(String.format(getString(R.string.pm25), weather.getShowapi_res_body().getNow().getAqiDetail().getPm2_5()));
         mainAqi.setText(aqi);
-        mainAqi2.setText(aqi);
         mainHint.setText("温馨提示：" + weather.getShowapi_res_body().getF1().getIndex().getTravel().getDesc());
         AQI = Integer.valueOf(aqi);
         setView(Integer.valueOf(AQI));
@@ -606,11 +614,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 break;
             case 0x07:
                 seekbarSelf.setProgress(byteToInt(data[3]));
-                if (byteToInt(data[3]) > 0) {
-                    mainZhuangtai.setText("已开启");
-                } else {
-                    mainZhuangtai.setText("未开启");
-                }
+
                 break;
             default:
                 //过滤膜
@@ -634,5 +638,33 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
     private static String buildTransaction(String type) {
         return (type == null) ? String.valueOf(System.currentTimeMillis()) : type + System.currentTimeMillis();
+    }
+
+    public void autoConnect() {
+
+        if (MyService.Instance() != null) {
+            if (MyService.Instance().getMode() != LightAdapter.MODE_AUTO_CONNECT_MESH) {
+                Lights.getInstance().clear();
+
+                if (this.mApplication.isEmptyMesh()) {
+                    return;
+                }
+
+                Mesh mesh = this.mApplication.getMesh();
+                LeAutoConnectParameters connectParams = Parameters.createAutoConnectParameters();
+                Log.e("-------", mesh.name + mesh.password);
+                connectParams.setMeshName(mesh.name);
+                connectParams.setPassword(mesh.password);
+                connectParams.autoEnableNotification(true);
+
+                MyService.Instance().autoConnect(connectParams);
+            }
+
+            LeRefreshNotifyParameters refreshNotifyParams = Parameters.createRefreshNotifyParameters();
+            refreshNotifyParams.setRefreshRepeatCount(2);
+            refreshNotifyParams.setRefreshInterval(2000);
+
+            MyService.Instance().autoRefreshNotify(refreshNotifyParams);
+        }
     }
 }
