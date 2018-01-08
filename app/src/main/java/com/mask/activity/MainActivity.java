@@ -100,7 +100,8 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     TextView aqi;
     @BindView(R.id.main_pm)
     TextView mainPm;
-
+    @BindView(R.id.main_ble)
+    TextView mainBle;
     @BindView(R.id.kongqi)
     TextView kongQi;
     @BindView(R.id.main_guolv)
@@ -180,6 +181,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             public void onNotifyData(int opcode, int src, byte[] params, DeviceInfo deviceInfo) {
 
                 if (mApplication.getLight() != null) {
+
                     if (mApplication.getLight().meshAddress == src) {
                         if (params[0] == (byte) 0xAF) {
                             //  Toast.makeText(MainActivity.this, data, Toast.LENGTH_SHORT).show();
@@ -189,11 +191,10 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 }
             }
         });
-        mainGuolv.setText(String.format(getString(R.string.guolv), "0"));
+        mainGuolv.setText(String.format(getString(R.string.guolv), "良好"));
         setDingshi.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
                 if (mApplication.getLight() != null) {
                     if (isChecked) {
                         String msg = "AF1A" + StringToHex(mainTiem.getText() + "") + "0E";
@@ -204,6 +205,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
             }
         });
+       // MyService.Instance().startLocation();
     }
 
     @OnClick({R.id.main_cehua, R.id.main_tiem, R.id.main_fenxiang, R.id.main_out_tv, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
@@ -258,7 +260,6 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     protected void onStop() {
         super.onStop();
         activityMain.closeDrawer(Gravity.LEFT);
-
         MyService.Instance().disableAutoRefreshNotify();
     }
 
@@ -327,14 +328,11 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-
                     MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0100000E"));
                     handler.postDelayed(this, 2000);
                 }
             }, 200);
-            mainZhuangtai.setText("已开启");
-        } else {
-            mainZhuangtai.setText("未开启");
+            //mainBle.setText("蓝牙连接:已连接");
         }
 
 
@@ -380,6 +378,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 switch (state) {
                     case BluetoothAdapter.STATE_OFF:
                         Log.d("aaa", "STATE_OFF 手机蓝牙关闭");
+                        mainBle.setText("蓝牙连接:未连接");
                         break;
                     case BluetoothAdapter.STATE_TURNING_OFF:
                         Log.d("aaa", "STATE_TURNING_OFF 手机蓝牙正在关闭");
@@ -392,12 +391,18 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                     case BluetoothAdapter.STATE_TURNING_ON:
                         Log.d("aaa", "STATE_TURNING_ON 手机蓝牙正在开启");
                         break;
+                    default:
+                        break;
                 }
             } else if (action.equals(BluetoothDevice.ACTION_ACL_CONNECTED)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 Log.d("aaa", device.getName() + " ACTION_ACL_CONNECTED");
+                if (device.getName().equals("AT-mesh")) {
+                    mainBle.setText("蓝牙连接:已连接");
+                }
             } else if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECTED)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                mainBle.setText("蓝牙连接:未连接");
                 Log.d("aaa", device.getName() + " ACTION_ACL_DISCONNECTED");
                 MyService.Instance().idleMode(true);
                 autoConnect();
@@ -597,8 +602,16 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         //设备数据
         switch (data[1]) {
             case 0x02:
-                String msg = Integer.parseInt(ToHex.bytesToHex(new byte[]{data[2], data[3]}), 16) + "";
-                mainPm.setText(String.format(getString(R.string.pm25), msg));
+                int msg = Integer.parseInt(ToHex.bytesToHex(new byte[]{data[2], data[3]}), 16);
+                mainPm.setText(String.format(getString(R.string.pm25), String.valueOf(msg)));
+                if (msg <= 50) {
+                    mainGuolv.setText(String.format(getString(R.string.guolv), "良好"));
+                } else if (msg <= 100) {
+                    mainGuolv.setText(String.format(getString(R.string.guolv), "一般"));
+                } else if (msg > 100) {
+                    mainGuolv.setText(String.format(getString(R.string.guolv), " 建议更换"));
+                }
+
                 break;
             case 0x04:
                 //电量
@@ -614,6 +627,11 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 break;
             case 0x07:
                 seekbarSelf.setProgress(byteToInt(data[3]));
+                if (byteToInt(data[3]) > 0) {
+                    mainZhuangtai.setText(byteToInt(data[3]) + "档");
+                } else {
+                    mainZhuangtai.setText("关闭");
+                }
 
                 break;
             default:

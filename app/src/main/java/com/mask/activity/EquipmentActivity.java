@@ -64,7 +64,7 @@ public class EquipmentActivity extends BaseActivity implements AdapterView.OnIte
         listView.setMenuCreator(creator);
         listView.setOnMenuItemClickListener(this);
         listView.setOnItemClickListener(this);
-        this.mApplication = (MyApplication) this.getApplication();
+        this.mApplication = MyApplication.newInstance();
         this.mApplication.addEventListener(DeviceEvent.STATUS_CHANGED, this);
         this.mApplication.addEventListener(NotificationEvent.ONLINE_STATUS, this);
         this.autoConnect();

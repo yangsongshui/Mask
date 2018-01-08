@@ -4,6 +4,7 @@
  */
 package com.telink;
 
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -38,7 +39,7 @@ import com.telink.util.Strings;
 
 import org.litepal.LitePalApplication;
 
-public class TelinkApplication extends LitePalApplication {
+public class TelinkApplication extends Application {
 
     private static TelinkApplication mThis;
 

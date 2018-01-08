@@ -14,7 +14,6 @@ import com.telink.bluetooth.light.AdvanceStrategy;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
-import org.litepal.LitePal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +47,7 @@ public class MyApplication extends TelinkApplication {
     public void onCreate() {
         super.onCreate();
         instance = this;
-        LitePal.initialize(this);
+       // LitePal.initialize(this);
         SpUtils.init(this);
         AdvanceStrategy.setDefault(new MySampleAdvanceStrategy());
         this.startLightService(MyService.class);

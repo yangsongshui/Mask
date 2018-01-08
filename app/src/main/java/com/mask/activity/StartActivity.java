@@ -6,18 +6,31 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.mask.R;
+import com.mask.app.MyApplication;
 import com.mask.base.BaseActivity;
 import com.mask.utils.Toastor;
 import com.zhy.m.permission.MPermissions;
 import com.zhy.m.permission.PermissionDenied;
 import com.zhy.m.permission.PermissionGrant;
 
+import static com.mask.utils.Constant.ACTION_BLE_NOTIFY_DATA;
+
 public class StartActivity extends BaseActivity {
     private BluetoothAdapter mBluetoothAdapter;
     Toastor toastor;
     private final static int REQUECT_CODE_COARSE = 1;
+    //声明AMapLocationClient类对象
+    public AMapLocationClient mLocationClient = null;
+    //声明AMapLocationClientOption对象
+    public AMapLocationClientOption mLocationOption = null;
     @Override
     protected int getContentView() {
         return R.layout.activity_start;
@@ -25,9 +38,27 @@ public class StartActivity extends BaseActivity {
 
     @Override
     protected void init() {
+        //初始化定位
+        mLocationClient = new AMapLocationClient(getApplicationContext());
+        //设置定位回调监听
+        mLocationClient.setLocationListener(mLocationListener);
+        //初始化AMapLocationClientOption对象
+        mLocationOption = new AMapLocationClientOption();
+        mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+        mLocationOption.setInterval(60000);
+        mLocationOption.setNeedAddress(true);
+        //给定位客户端对象设置定位参数
+        mLocationClient.setLocationOption(mLocationOption);
 
-        MPermissions.requestPermissions(StartActivity.this, REQUECT_CODE_COARSE,
-                Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            MPermissions.requestPermissions(StartActivity.this, REQUECT_CODE_COARSE,
+                    Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        } else {
+            startLocation();
+            startActivity(new Intent(StartActivity.this, MainActivity.class)); //
+        }
+
         toastor = new Toastor(this);
         initBLE();
     }
@@ -40,6 +71,7 @@ public class StartActivity extends BaseActivity {
 
     @PermissionGrant(REQUECT_CODE_COARSE)
     public void requestSdcardSuccess() {
+        startLocation();
         startActivity(new Intent(StartActivity.this, MainActivity.class));
         finish();
     }
@@ -65,5 +97,33 @@ public class StartActivity extends BaseActivity {
             return;
         }
         mBluetoothAdapter.enable();
+    }
+    //声明定位回调监听器
+    public AMapLocationListener mLocationListener = new AMapLocationListener() {
+        @Override
+        public void onLocationChanged(AMapLocation aMapLocation) {
+            if (aMapLocation != null) {
+                Intent intent = new Intent();
+                if (aMapLocation.getErrorCode() == 0) {
+                    //可在其中解析amapLocation获取相应内容。
+                    Log.e("定位数据", aMapLocation.toString());
+                    if (!aMapLocation.getCity().isEmpty()) {
+                        MyApplication.newInstance().address = aMapLocation.getCity();
+                        intent.putExtra("address", aMapLocation.getAddress());
+                        intent.setAction(ACTION_BLE_NOTIFY_DATA);
+                        sendBroadcast(intent);
+                    }
+                } else {
+                    Log.e("AmapError", "location Error, ErrCode:"
+                            + aMapLocation.getErrorCode() + ", errInfo:"
+                            + aMapLocation.getErrorInfo());
+                }
+
+            }
+        }
+    };
+    public void startLocation() {
+        //启动定位
+        mLocationClient.startLocation();
     }
 }
