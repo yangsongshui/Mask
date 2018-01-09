@@ -197,15 +197,19 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (mApplication.getLight() != null) {
                     if (isChecked) {
-                        String msg = "AF1A" + StringToHex(mainTiem.getText() + "") + "0E";
+                        mainTiem.setEnabled(false);
+                        String msg = "AF05" + StringToHex(mainTiem.getText() + "") + "0E";
                         MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes(msg));
+                    } else {
+                        mainTiem.setEnabled(true);
+                        MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, Arrays.hexToBytes("AF0500000E"));
                     }
-                    MyService.Instance().sendCommandNoResponse(OPCODE, mApplication.getLight().meshAddress, isChecked ? Arrays.hexToBytes("AF0500010E") : Arrays.hexToBytes("AF0500000E"));
+
                 }
 
             }
         });
-       // MyService.Instance().startLocation();
+        // MyService.Instance().startLocation();
     }
 
     @OnClick({R.id.main_cehua, R.id.main_tiem, R.id.main_fenxiang, R.id.main_out_tv, R.id.me_pic_iv, R.id.main_equipment_tv, R.id.main_add_tv})
@@ -550,7 +554,6 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             View v = getCurrentFocus();
             if (isShouldHideInput(v, ev)) {
@@ -558,6 +561,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                 mainTiem.setVisibility(View.VISIBLE);
                 if (!timeEd.getText().toString().equals("")) {
                     mainTiem.setText(timeEd.getText().toString());
+
                 }
                 if (hideInputMethod(this, v)) {
                     //隐藏键盘时，其他控件不响应点击事件==》注释则不拦截点击事件
@@ -624,6 +628,14 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                     mainYuji.setText(String.format(getString(R.string.time), byteToInt(data[3]) + ""));
                 }
 
+                break;
+            case 0x05:
+            case 0x1A:
+                int time = Integer.parseInt(ToHex.bytesToHex(new byte[]{data[2], data[3]}), 16);
+                if (time == 0) {
+                    mainTiem.setEnabled(true);
+                    setDingshi.toggleNoEvent();
+                }
                 break;
             case 0x07:
                 seekbarSelf.setProgress(byteToInt(data[3]));

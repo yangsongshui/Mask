@@ -56,7 +56,8 @@ public class StartActivity extends BaseActivity {
                     Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         } else {
             startLocation();
-            startActivity(new Intent(StartActivity.this, MainActivity.class)); //
+            startActivity(new Intent(StartActivity.this, MainActivity.class));
+            finish();
         }
 
         toastor = new Toastor(this);
