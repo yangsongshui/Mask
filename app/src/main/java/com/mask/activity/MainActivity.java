@@ -630,6 +630,7 @@ public class MainActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
                 break;
             case 0x05:
+                break;
             case 0x1A:
                 int time = Integer.parseInt(ToHex.bytesToHex(new byte[]{data[2], data[3]}), 16);
                 if (time == 0) {
